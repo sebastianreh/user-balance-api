@@ -3,7 +3,8 @@ package transaction
 import "context"
 
 const (
-	RepositoryName = "TransactionRepository"
+	RepositoryName            = "TransactionRepository"
+	DuplicateTransactionError = "duplicated transaction"
 )
 
 type Repository interface {

@@ -14,6 +14,7 @@ import (
 
 const (
 	balanceHandlerName = "BalanceHandler"
+	timeLayout         = "2006-01-02T15:04:05Z"
 )
 
 type BalanceHandler struct {
@@ -113,14 +114,12 @@ func validateBalanceWithOptionsRequest(ctx echo.Context) (id, fromDate, toDate s
 }
 
 func validateDates(fromDate, toDate string) error {
-	layout := "2006-01-02T15:04:05Z"
-
-	fromTime, err := time.Parse(layout, fromDate)
+	fromTime, err := time.Parse(timeLayout, fromDate)
 	if err != nil {
 		return fmt.Errorf("invalid fromDate format: %v", err)
 	}
 
-	toTime, err := time.Parse(layout, toDate)
+	toTime, err := time.Parse(timeLayout, toDate)
 	if err != nil {
 		return fmt.Errorf("invalid toDate format: %v", err)
 	}

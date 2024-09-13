@@ -18,6 +18,9 @@ type (
 			Password string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
 			DbName   string `envconfig:"POSTGRES_DATABASE" default:"user-balance"`
 		}
+		Workers struct {
+			MigrationWorkersSize int `envconfig:"MIGRATION_WORKERS_SIZE" default:"5"`
+		}
 	}
 )
 

@@ -49,7 +49,7 @@ func Build() Dependencies {
 
 	balanceService := services.NewBalanceService(dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, balanceCalculator)
-	migrationService := services.NewMigrationService(dependencies.Logs, userSQLRepository,
+	migrationService := services.NewMigrationService(dependencies.Config, dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, csvProcessor)
 
 	dependencies.BalanceHandler = http.NewBalanceHandler(dependencies.Logs, balanceService)

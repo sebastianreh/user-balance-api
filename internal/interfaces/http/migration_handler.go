@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver/exceptions"
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
+	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 	"io"
 	"mime/multipart"
@@ -41,7 +42,7 @@ func (h *MigrationHandler) UploadMigrationCSV(ctx echo.Context) error {
 
 	err = h.service.ProcessBalance(ctx.Request().Context(), file)
 	if err != nil {
-		if err.Error() == services.ReadFileError {
+		if err.Error() == services.ReadFileError || strings.Contains(err.Error(), transaction.DuplicateTransactionError) {
 			err := exceptions.NewBadRequestException(err.Error())
 			return ctx.JSON(err.Code(), err.Error())
 		}

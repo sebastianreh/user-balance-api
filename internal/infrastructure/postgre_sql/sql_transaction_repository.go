@@ -3,6 +3,9 @@ package postgre_sql
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/lib/pq"
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 )
@@ -23,6 +26,10 @@ func (s *sqlTransactionRepository) Save(ctx context.Context, userTransaction tra
 	query := SaveByUserID
 	_, err := s.db.ExecContext(ctx, query, userTransaction.ID, userTransaction.UserID, userTransaction.Amount, userTransaction.DateTime)
 	if err != nil {
+		duplicateErr := handleDuplicateError(err, userTransaction.ID)
+		if duplicateErr != nil {
+			err = duplicateErr
+		}
 		s.log.ErrorAt(err, transaction.RepositoryName, "Save")
 		return err
 	}
@@ -123,6 +130,16 @@ func findByUserIDOptionalDateRangeQuery(fromDate, toDate string) string {
 	}
 
 	return query
+}
+
+func handleDuplicateError(err error, id string) error {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		if pqErr.Code == "23505" {
+			return fmt.Errorf("%s with id: %s", transaction.DuplicateTransactionError, id)
+		}
+	}
+	return nil
 }
 
 const (
