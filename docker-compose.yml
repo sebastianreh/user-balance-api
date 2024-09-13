@@ -1,0 +1,26 @@
+version: "3.3"
+services:
+  httpserver:
+    networks:
+      - backend
+    image: user-balance-api
+    environment:
+      - POSTGRES_HOST=postgres
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    networks:
+      - backend
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user-balance
+    ports:
+      - "5432:5432"
+
+networks:
+  backend:
