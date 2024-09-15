@@ -1,4 +1,4 @@
-package strings
+package customStr
 
 import (
 	"fmt"

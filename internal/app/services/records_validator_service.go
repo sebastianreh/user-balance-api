@@ -42,7 +42,7 @@ func validateUserID(userID string) error {
 }
 
 func validateAmount(amount string) error {
-	if strings.IsEmpty(amount) {
+	if customStr.IsEmpty(amount) {
 		return errors.New("amount field is empty")
 	}
 
@@ -54,7 +54,7 @@ func validateAmount(amount string) error {
 }
 
 func validateIntValue(fieldName, value string) error {
-	if strings.IsEmpty(value) {
+	if customStr.IsEmpty(value) {
 		return fmt.Errorf("%s field is empty", fieldName)
 	}
 
@@ -66,7 +66,7 @@ func validateIntValue(fieldName, value string) error {
 }
 
 func validateDatetime(datetime string) error {
-	if strings.IsEmpty(datetime) {
+	if customStr.IsEmpty(datetime) {
 		return errors.New("datetime field is empty")
 	}
 

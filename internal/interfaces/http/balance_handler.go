@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	balanceHandlerName = "BalanceHandler"
-	timeLayout         = "2006-01-02T15:04:05Z"
+	balanceHandlerName   = "BalanceHandler"
+	TimeLayoutUTC        = "2006-01-02T15:04:05Z"
+	TimeLayoutWithOffset = "2006-01-02T15:04:05-07:00"
 )
 
 type BalanceHandler struct {
@@ -40,20 +41,20 @@ func (h *BalanceHandler) GetUserBalanceWithOptions(ctx echo.Context) error {
 func (h *BalanceHandler) HandleGetUserBalanceWithOptions(ctx echo.Context) error {
 	id, fromDate, toDate, err := validateBalanceWithOptionsRequest(ctx)
 	if err != nil {
-		err := exceptions.NewBadRequestException(err.Error())
-		h.log.ErrorAt(err, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewBadRequestException(err.Error())
+		h.log.ErrorAt(exception, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	balance, err := h.service.GetBalanceByUserIDWithOptions(ctx.Request().Context(), id, fromDate, toDate)
 	if err != nil {
 		if err.Error() == services.UserNotFound {
-			err := exceptions.NewNotFoundException(err.Error())
-			return ctx.JSON(err.Code(), err.Error())
+			exception := exceptions.NewBadRequestException(err.Error())
+			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		err := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewInternalServerException(err.Error())
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, balance)
@@ -62,20 +63,20 @@ func (h *BalanceHandler) HandleGetUserBalanceWithOptions(ctx echo.Context) error
 func (h *BalanceHandler) HandleGetUserBalanceWithoutOptions(ctx echo.Context) error {
 	id, err := validateUserBalanceRequest(ctx)
 	if err != nil {
-		err := exceptions.NewBadRequestException(err.Error())
-		h.log.ErrorAt(err, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewBadRequestException(err.Error())
+		h.log.ErrorAt(exception, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	balance, err := h.service.GetBalanceByUserID(ctx.Request().Context(), id)
 	if err != nil {
 		if err.Error() == services.UserNotFound {
-			err := exceptions.NewNotFoundException(err.Error())
-			return ctx.JSON(err.Code(), err.Error())
+			exception := exceptions.NewNotFoundException(err.Error())
+			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		err := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewInternalServerException(err.Error())
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	return ctx.JSON(http.StatusOK, balance)
@@ -97,11 +98,11 @@ func validateBalanceWithOptionsRequest(ctx echo.Context) (id, fromDate, toDate s
 	fromDate = ctx.QueryParam("from")
 	toDate = ctx.QueryParam("to")
 
-	if strings.IsEmpty(id) {
+	if customStr.IsEmpty(id) {
 		return id, fromDate, toDate, errors.New("missing param id")
 	}
 
-	if strings.IsEmpty(fromDate) || strings.IsEmpty(toDate) {
+	if customStr.IsEmpty(fromDate) || customStr.IsEmpty(toDate) {
 		return id, fromDate, toDate, errors.New("missing date values")
 	}
 
@@ -114,14 +115,20 @@ func validateBalanceWithOptionsRequest(ctx echo.Context) (id, fromDate, toDate s
 }
 
 func validateDates(fromDate, toDate string) error {
-	fromTime, err := time.Parse(timeLayout, fromDate)
+	fromTime, err := time.Parse(TimeLayoutUTC, fromDate)
 	if err != nil {
-		return fmt.Errorf("invalid fromDate format: %v", err)
+		fromTime, err = time.Parse(TimeLayoutWithOffset, fromDate)
+		if err != nil {
+			return fmt.Errorf("invalid fromDate format: %v", err)
+		}
 	}
 
-	toTime, err := time.Parse(timeLayout, toDate)
+	toTime, err := time.Parse(TimeLayoutUTC, toDate)
 	if err != nil {
-		return fmt.Errorf("invalid toDate format: %v", err)
+		toTime, err = time.Parse(TimeLayoutWithOffset, toDate)
+		if err != nil {
+			return fmt.Errorf("invalid toDate format: %v", err)
+		}
 	}
 
 	if fromTime.After(toTime) {
@@ -134,7 +141,7 @@ func validateDates(fromDate, toDate string) error {
 func validateUserBalanceRequest(ctx echo.Context) (string, error) {
 	id := ctx.Param("user_id")
 
-	if strings.IsEmpty(id) {
+	if customStr.IsEmpty(id) {
 		return id, errors.New("missing param id")
 	}
 

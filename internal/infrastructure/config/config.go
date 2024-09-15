@@ -19,7 +19,8 @@ type (
 			DbName   string `envconfig:"POSTGRES_DATABASE" default:"user-balance"`
 		}
 		Workers struct {
-			MigrationWorkersSize int `envconfig:"MIGRATION_WORKERS_SIZE" default:"5"`
+			MigrationWorkersSize     int `envconfig:"MIGRATION_WORKERS_SIZE" default:"5"`
+			MigrationWorkerBatchSize int `envconfig:"MIGRATION_WORKERS_BATCH_SIZE" default:"400"`
 		}
 	}
 )

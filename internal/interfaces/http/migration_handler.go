@@ -35,20 +35,20 @@ func NewMigrationHandler(logger logger.Logger, service services.MigrationService
 func (h *MigrationHandler) UploadMigrationCSV(ctx echo.Context) error {
 	file, err := validateFile(ctx)
 	if err != nil {
-		err := exceptions.NewBadRequestException(err.Error())
-		h.log.ErrorAt(err, migrationHandlerName, "UploadMigrationsCSV")
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewBadRequestException(err.Error())
+		h.log.ErrorAt(exception, migrationHandlerName, "UploadMigrationsCSV")
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	err = h.service.ProcessBalance(ctx.Request().Context(), file)
 	if err != nil {
 		if err.Error() == services.ReadFileError || strings.Contains(err.Error(), transaction.DuplicateTransactionError) {
-			err := exceptions.NewBadRequestException(err.Error())
-			return ctx.JSON(err.Code(), err.Error())
+			exception := exceptions.NewBadRequestException(err.Error())
+			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		err := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(err.Code(), err.Error())
+		exception := exceptions.NewInternalServerException(err.Error())
+		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
 	return ctx.NoContent(http.StatusOK)

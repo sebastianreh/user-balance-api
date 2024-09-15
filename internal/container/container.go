@@ -12,12 +12,14 @@ import (
 )
 
 type Dependencies struct {
-	Config           config.Config
-	Logs             logger.Logger
-	SQL              *sql.DB
-	PingHandler      *http.PingHandler
-	BalanceHandler   *http.BalanceHandler
-	MigrationHandler *http.MigrationHandler
+	Config             config.Config
+	Logs               logger.Logger
+	SQL                *sql.DB
+	PingHandler        *http.PingHandler
+	UserHandler        *http.UserHandler
+	TransactionHandler *http.TransactionHandler
+	BalanceHandler     *http.BalanceHandler
+	MigrationHandler   *http.MigrationHandler
 }
 
 func Build() Dependencies {
@@ -47,11 +49,15 @@ func Build() Dependencies {
 
 	csvProcessor := csv.NewCsvProcessor()
 
+	userService := services.NewUserService(dependencies.Logs, userSQLRepository)
+	transactionService := services.NewTransactionService(dependencies.Logs, transactionSQLRepository)
 	balanceService := services.NewBalanceService(dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, balanceCalculator)
 	migrationService := services.NewMigrationService(dependencies.Config, dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, csvProcessor)
 
+	dependencies.UserHandler = http.NewUserHandler(dependencies.Logs, userService)
+	dependencies.TransactionHandler = http.NewTransactionHandler(dependencies.Logs, transactionService)
 	dependencies.BalanceHandler = http.NewBalanceHandler(dependencies.Logs, balanceService)
 	dependencies.MigrationHandler = http.NewMigrationHandler(dependencies.Logs, migrationService)
 

@@ -6,10 +6,11 @@ import (
 )
 
 type Transaction struct {
-	ID       string    `json:"id"`
-	UserID   string    `json:"user_id"`
-	Amount   float64   `json:"amount"`
-	DateTime time.Time `json:"date_time"`
+	ID        string     `json:"id"`
+	UserID    string     `json:"user_id"`
+	Amount    float64    `json:"amount"`
+	DateTime  *time.Time `json:"date_time"`
+	IsDeleted bool       `json:"-"`
 }
 
 func CreateTransactionByRecord(record []string) (Transaction, error) {
@@ -28,7 +29,7 @@ func CreateTransactionByRecord(record []string) (Transaction, error) {
 		ID:       record[0],
 		UserID:   record[1],
 		Amount:   amount,
-		DateTime: parsedTime,
+		DateTime: &parsedTime,
 	}
 
 	return transaction, nil

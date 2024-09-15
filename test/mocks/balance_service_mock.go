@@ -18,3 +18,8 @@ func (m *BalanceServiceMock) GetBalanceByUserIDWithOptions(ctx context.Context, 
 	args := m.Called(ctx, userID, fromDate, toDate)
 	return args.Get(0).(balance.UserBalance), args.Error(1)
 }
+
+func (m *BalanceServiceMock) GetBalanceByUserID(ctx context.Context, userID string) (balance.UserBalance, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(balance.UserBalance), args.Error(1)
+}

@@ -14,7 +14,7 @@ const (
 )
 
 type BalanceService interface {
-	GetBalanceByUserIDWithOptions(ctx context.Context, userID string, fromDate, toDate string) (balance.UserBalance, error)
+	GetBalanceByUserIDWithOptions(ctx context.Context, userID, fromDate, toDate string) (balance.UserBalance, error)
 	GetBalanceByUserID(ctx context.Context, userID string) (balance.UserBalance, error)
 }
 
@@ -35,8 +35,7 @@ func NewBalanceService(logger logger.Logger, userRepository user.Repository,
 	}
 }
 
-func (s balanceService) GetBalanceByUserIDWithOptions(ctx context.Context, userID string,
-	fromDate, toDate string) (balance.UserBalance, error) {
+func (s balanceService) GetBalanceByUserIDWithOptions(ctx context.Context, userID, fromDate, toDate string) (balance.UserBalance, error) {
 	var userBalance balance.UserBalance
 	_, err := s.userRepository.FindByID(ctx, userID)
 	if err != nil {
@@ -54,18 +53,5 @@ func (s balanceService) GetBalanceByUserIDWithOptions(ctx context.Context, userI
 }
 
 func (s balanceService) GetBalanceByUserID(ctx context.Context, userID string) (balance.UserBalance, error) {
-	var userBalance balance.UserBalance
-	_, err := s.userRepository.FindByID(ctx, userID)
-	if err != nil {
-		return userBalance, err
-	}
-
-	transactions, err := s.transactionRepository.FindByUserIDWithOptions(ctx, userID, strings.Empty, strings.Empty)
-	if err != nil {
-		return userBalance, err
-	}
-
-	userBalance = s.balanceCalculator.CalculateBalanceByUser(transactions)
-
-	return userBalance, nil
+	return s.GetBalanceByUserIDWithOptions(ctx, userID, customStr.Empty, customStr.Empty)
 }

@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
+	"github.com/sebastianreh/user-balance-api/internal/domain/user"
+
 	"github.com/lib/pq"
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
@@ -24,13 +25,17 @@ func NewSqlTransactionRepository(logger logger.Logger, db *sql.DB) transaction.R
 
 func (s *sqlTransactionRepository) Save(ctx context.Context, userTransaction transaction.Transaction) error {
 	query := SaveByUserID
+	if userTransaction.Amount == 0 {
+		return errors.New(transaction.ZeroAmountError)
+	}
+
 	_, err := s.db.ExecContext(ctx, query, userTransaction.ID, userTransaction.UserID, userTransaction.Amount, userTransaction.DateTime)
 	if err != nil {
-		duplicateErr := handleDuplicateError(err, userTransaction.ID)
+		s.log.ErrorAt(err, transaction.RepositoryName, "Save")
+		duplicateErr := handleDuplicateError(err)
 		if duplicateErr != nil {
 			err = duplicateErr
 		}
-		s.log.ErrorAt(err, transaction.RepositoryName, "Save")
 		return err
 	}
 	return nil
@@ -53,9 +58,19 @@ func (s *sqlTransactionRepository) SaveBatch(ctx context.Context, transactions [
 	defer stmt.Close()
 
 	for _, transactionEntity := range transactions {
-		if _, err = stmt.ExecContext(ctx, transactionEntity.ID, transactionEntity.UserID,
-			transactionEntity.Amount, transactionEntity.DateTime); err != nil {
+		if transactionEntity.Amount == 0 {
+			_ = tx.Rollback()
+			return errors.New(transaction.ZeroAmountError)
+		}
+
+		_, err := stmt.ExecContext(ctx, transactionEntity.ID, transactionEntity.UserID,
+			transactionEntity.Amount, transactionEntity.DateTime)
+		if err != nil {
 			s.log.ErrorAt(err, transaction.RepositoryName, "SaveBatch")
+			duplicateErr := handleDuplicateError(err)
+			if duplicateErr != nil {
+				err = duplicateErr
+			}
 			_ = tx.Rollback()
 			return err
 		}
@@ -69,27 +84,22 @@ func (s *sqlTransactionRepository) SaveBatch(ctx context.Context, transactions [
 	return nil
 }
 
-func (s *sqlTransactionRepository) FindByID(ctx context.Context, transactionID string) ([]transaction.Transaction, error) {
+func (s *sqlTransactionRepository) FindByID(ctx context.Context, transactionID string) (transaction.Transaction, error) {
+	var transactionEntity transaction.Transaction
 	query := FindByID
-	rows, err := s.db.QueryContext(ctx, query, transactionID)
+	row := s.db.QueryRowContext(ctx, query, transactionID)
+	err := row.Scan(&transactionEntity.ID, &transactionEntity.UserID,
+		&transactionEntity.Amount, &transactionEntity.DateTime)
 	if err != nil {
-		s.log.ErrorAt(err, transaction.RepositoryName, "FindByID")
-		return nil, err
-	}
-	defer rows.Close()
-
-	var transactions []transaction.Transaction
-	for rows.Next() {
-		var transactionEntity transaction.Transaction
-		if err = rows.Scan(&transactionEntity.ID, &transactionEntity.UserID,
-			&transactionEntity.Amount, &transactionEntity.DateTime); err != nil {
-			s.log.ErrorAt(err, transaction.RepositoryName, "FindByID")
-			return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return transactionEntity, errors.New(user.NotFoundError)
 		}
-		transactions = append(transactions, transactionEntity)
+
+		s.log.ErrorAt(err, transaction.RepositoryName, "FindByID")
+		return transactionEntity, err
 	}
 
-	return transactions, nil
+	return transactionEntity, nil
 }
 
 func (s *sqlTransactionRepository) FindByUserIDWithOptions(ctx context.Context, userID, fromDate, toDate string) ([]transaction.Transaction, error) {
@@ -132,11 +142,11 @@ func findByUserIDOptionalDateRangeQuery(fromDate, toDate string) string {
 	return query
 }
 
-func handleDuplicateError(err error, id string) error {
+func handleDuplicateError(err error) error {
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
 		if pqErr.Code == "23505" {
-			return fmt.Errorf("%s with id: %s", transaction.DuplicateTransactionError, id)
+			return errors.New(transaction.DuplicateTransactionError)
 		}
 	}
 	return nil

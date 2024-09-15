@@ -10,3 +10,6 @@ Also in the challenge there is an inconsistency in this request:
 
 Here, the from date is with timezone and the to date is without timezone. This implementation doesn't support timezones, since it's the common
 practice to use GMT in this type of services.
+
+I added users and transactions endpoint so if there is any need for modification connecting to the database will not be necessary. 
+- Add unique user validation for creation

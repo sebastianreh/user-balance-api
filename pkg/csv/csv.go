@@ -4,19 +4,48 @@ import (
 	"bytes"
 	"encoding/csv"
 	"errors"
+	"io"
+	"mime/multipart"
 )
 
 const (
 	minRecords = 2
 )
 
-type CsvProcessor struct{}
-
-func NewCsvProcessor() CsvProcessor {
-	return CsvProcessor{}
+type CsvProcessor interface {
+	ReadFile(file *multipart.FileHeader, recordValidator func(record []string) error) ([][]string, error)
 }
 
-func (*CsvProcessor) CsvBytesToRecords(csvBytes []byte, validator func(record []string) error) ([][]string, error) {
+type csvProcessor struct{}
+
+func NewCsvProcessor() CsvProcessor {
+	return &csvProcessor{}
+}
+
+func (c *csvProcessor) ReadFile(file *multipart.FileHeader, recordValidator func(record []string) error) ([][]string, error) {
+	records := make([][]string, 0)
+
+	src, err := file.Open()
+	if err != nil {
+		return records, err
+	}
+	defer src.Close()
+
+	var fileBytes []byte
+	fileBytes, err = io.ReadAll(src)
+	if err != nil {
+		return records, err
+	}
+
+	records, err = csvBytesToRecords(fileBytes, recordValidator)
+	if err != nil {
+		return records, err
+	}
+
+	return records, nil
+}
+
+func csvBytesToRecords(csvBytes []byte, validator func(record []string) error) ([][]string, error) {
 	var records [][]string
 	reader := csv.NewReader(bytes.NewReader(csvBytes))
 

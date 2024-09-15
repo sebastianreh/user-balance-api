@@ -38,30 +38,11 @@ func (s *sqlUserRepository) FindByID(ctx context.Context, userID string) (user.U
 	err := row.Scan(&userEntity.ID, &userEntity.FirstName, &userEntity.LastName, &userEntity.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return user.User{}, nil // No user found
+			return userEntity, errors.New(user.NotFoundError)
 		}
 
 		s.log.ErrorAt(err, user.RepositoryName, "FindByID")
 		return userEntity, err
-	}
-
-	return userEntity, nil
-}
-
-func (s *sqlUserRepository) FindByTransactionID(ctx context.Context, transactionID string) (user.User, error) {
-	userEntity := user.User{
-		ID: transactionID,
-	}
-	query := FindUserByTransactionID
-	row := s.db.QueryRowContext(ctx, query, transactionID)
-	err := row.Scan(&userEntity.FirstName, &userEntity.LastName, &userEntity.Email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return user.User{}, nil // No user found
-		}
-
-		s.log.ErrorAt(err, user.RepositoryName, "FindByTransactionID")
-		return user.User{}, err
 	}
 
 	return userEntity, nil
@@ -75,6 +56,5 @@ const (
 	SET first_name = COALESCE(NULLIF(EXCLUDED.first_name, ''), users.first_name), 
 		last_name = COALESCE(NULLIF(EXCLUDED.last_name, ''), users.last_name), 
 		email = COALESCE(NULLIF(EXCLUDED.email, ''), users.email)`
-	FindUserByID            = "SELECT id, first_name, last_name, email FROM users WHERE id = $1"
-	FindUserByTransactionID = `SELECT id, first_name, last_name, email FROM users u JOIN transactions t ON u.id = t.user_id WHERE t.id = $1`
+	FindUserByID = "SELECT id, first_name, last_name, email FROM users WHERE id = $1"
 )

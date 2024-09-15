@@ -5,6 +5,7 @@ type User struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
+	IsDeleted bool   `json:"-"`
 }
 
 func CreateUserByRecord(record []string) User {
