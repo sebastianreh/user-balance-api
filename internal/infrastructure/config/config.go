@@ -18,6 +18,14 @@ type (
 			Password string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
 			DbName   string `envconfig:"POSTGRES_DATABASE" default:"user-balance"`
 		}
+		SMTP struct {
+			Username string `envconfig:"SMTP_USER" default:"apikey"`
+			Password string `envconfig:"SMTP_PASSWORD" default:""`
+			From     string `envconfig:"SMTP_EMAIL" default:"sebastianreh@gmail.com"`
+			Host     string `envconfig:"SMTP_HOST" default:"smtp.sendgrid.net"`
+			Port     string `envconfig:"SMTP_PORT" default:"587"`
+			SendTo   string `envconfig:"SMTP_SEND_TO" default:"sebastianreh@gmail.com"`
+		}
 		Workers struct {
 			MigrationWorkersSize     int `envconfig:"MIGRATION_WORKERS_SIZE" default:"5"`
 			MigrationWorkerBatchSize int `envconfig:"MIGRATION_WORKERS_BATCH_SIZE" default:"400"`

@@ -25,7 +25,7 @@ func NewPostgresDB(config config.Config, log logger.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
-	log.Info("Successfully connected to the PostgreSQL database")
+	log.Info("Successfully connected to the PostgreSQL database", cfg.DbName)
 
 	return db, nil
 }

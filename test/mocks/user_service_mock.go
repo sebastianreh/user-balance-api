@@ -15,9 +15,9 @@ func NewUserServiceMock() *UserServiceMock {
 	return new(UserServiceMock)
 }
 
-func (m *UserServiceMock) CreateUser(ctx context.Context, userEntity user.User) error {
+func (m *UserServiceMock) CreateUser(ctx context.Context, userEntity user.User) (string, error) {
 	args := m.Called(ctx, userEntity)
-	return args.Error(0)
+	return args.Get(0).(string), args.Error(1)
 }
 
 func (m *UserServiceMock) UpdateUser(ctx context.Context, userEntity user.User) error {

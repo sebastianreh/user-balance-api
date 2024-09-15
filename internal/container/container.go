@@ -8,6 +8,7 @@ import (
 	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgre_sql"
 	"github.com/sebastianreh/user-balance-api/internal/interfaces/http"
 	"github.com/sebastianreh/user-balance-api/pkg/csv"
+	"github.com/sebastianreh/user-balance-api/pkg/email"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 )
 
@@ -47,19 +48,22 @@ func Build() Dependencies {
 
 	balanceCalculator := balance.NewBalanceCalculator()
 
+	smtpConfig := dependencies.Config.SMTP
 	csvProcessor := csv.NewCsvProcessor()
-
+	emailService := email.NewSMTPEmailService(smtpConfig.Username, smtpConfig.Password, smtpConfig.From, smtpConfig.SendTo,
+		smtpConfig.Host, smtpConfig.Port)
 	userService := services.NewUserService(dependencies.Logs, userSQLRepository)
 	transactionService := services.NewTransactionService(dependencies.Logs, transactionSQLRepository)
 	balanceService := services.NewBalanceService(dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, balanceCalculator)
 	migrationService := services.NewMigrationService(dependencies.Config, dependencies.Logs, userSQLRepository,
 		transactionSQLRepository, csvProcessor)
+	migrationsReportService := services.NewMigrationReportService(dependencies.Logs, emailService)
 
 	dependencies.UserHandler = http.NewUserHandler(dependencies.Logs, userService)
 	dependencies.TransactionHandler = http.NewTransactionHandler(dependencies.Logs, transactionService)
 	dependencies.BalanceHandler = http.NewBalanceHandler(dependencies.Logs, balanceService)
-	dependencies.MigrationHandler = http.NewMigrationHandler(dependencies.Logs, migrationService)
+	dependencies.MigrationHandler = http.NewMigrationHandler(dependencies.Logs, migrationService, migrationsReportService)
 
 	return dependencies
 }

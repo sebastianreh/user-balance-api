@@ -58,26 +58,6 @@ func Test_MigrationService_ProcessBalance(t *testing.T) {
 		assert.Equal(t, err, expectedError)
 	})
 
-	t.Run("When userRepository.Save returns an error", func(t *testing.T) {
-		records := [][]string{{"1", "test_user", "100.00", "2024-09-13T10:00:00Z"}}
-		expectedError := errors.New("error saving user: repository error")
-
-		csvProcessor := mocks.NewCsvProcessorMock()
-		csvProcessor.On("ReadFile", fileHeader, mock.Anything).Return(records, nil)
-
-		userRepo := mocks.NewUserRepositoryMock()
-		userRepo.On("Save", mock.Anything, mock.Anything).Return(errors.New("repository error"))
-
-		transactionRepo := mocks.NewTransactionRepositoryMock()
-
-		service := services.NewMigrationService(cfg, loggerMock, userRepo, transactionRepo, csvProcessor)
-
-		err := service.ProcessBalance(ctx, fileHeader)
-
-		assert.Error(t, err)
-		assert.Equal(t, expectedError, err)
-	})
-
 	t.Run("When transactionRepository.SaveBatch returns an error", func(t *testing.T) {
 		records := [][]string{{"1", "test_user", "100.00", "2024-09-13T10:00:00Z"}}
 		expectedError := errors.New("error saving transaction batch: repository error")

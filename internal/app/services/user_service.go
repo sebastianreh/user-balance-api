@@ -8,7 +8,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, userEntity User) error
+	CreateUser(ctx context.Context, userEntity User) (string, error)
 	UpdateUser(ctx context.Context, userEntity User) error
 	GetUser(ctx context.Context, userID string) (User, error)
 	DeleteUser(ctx context.Context, userID string) error
@@ -26,7 +26,7 @@ func NewUserService(log logger.Logger, repository Repository) UserService {
 	}
 }
 
-func (u *userService) CreateUser(ctx context.Context, userEntity User) error {
+func (u *userService) CreateUser(ctx context.Context, userEntity User) (string, error) {
 	return u.repository.Save(ctx, userEntity)
 }
 
@@ -36,7 +36,8 @@ func (u *userService) UpdateUser(ctx context.Context, userEntity User) error {
 		return err
 	}
 
-	return u.repository.Save(ctx, userEntity)
+	err = u.repository.Update(ctx, userEntity)
+	return err
 }
 
 func (u *userService) GetUser(ctx context.Context, userID string) (User, error) {
@@ -55,5 +56,6 @@ func (u *userService) DeleteUser(ctx context.Context, userID string) error {
 	}
 
 	userEntity.IsDeleted = true
-	return u.repository.Save(ctx, userEntity)
+	err = u.repository.Update(ctx, userEntity)
+	return err
 }

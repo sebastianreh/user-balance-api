@@ -21,10 +21,11 @@ func TestUserService_CreateUser(t *testing.T) {
 
 		userEntity := user.User{ID: "1", FirstName: "user", LastName: "lastname", Email: "user@email.com"}
 
-		mockRepo.On("Save", ctx, userEntity).Return(nil)
+		mockRepo.On("Save", ctx, userEntity).Return(userEntity.ID, nil)
 
-		err := service.CreateUser(ctx, userEntity)
+		userID, err := service.CreateUser(ctx, userEntity)
 		assert.Nil(t, err)
+		assert.Equal(t, userEntity.ID, userID)
 		mockRepo.AssertCalled(t, "Save", ctx, userEntity)
 	})
 
@@ -35,10 +36,11 @@ func TestUserService_CreateUser(t *testing.T) {
 		userEntity := user.User{ID: "1", FirstName: "user", LastName: "lastname", Email: "user@email.com"}
 		expectedError := errors.New("repository error")
 
-		mockRepo.On("Save", ctx, userEntity).Return(expectedError)
+		mockRepo.On("Save", ctx, userEntity).Return("", expectedError)
 
-		err := service.CreateUser(ctx, userEntity)
+		id, err := service.CreateUser(ctx, userEntity)
 		assert.Equal(t, expectedError, err)
+		assert.Empty(t, id)
 		mockRepo.AssertCalled(t, "Save", ctx, userEntity)
 	})
 }
@@ -54,12 +56,12 @@ func TestUserService_UpdateUser(t *testing.T) {
 		userEntity := user.User{ID: "1", FirstName: "user", LastName: "lastname", Email: "user@email.com"}
 
 		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Save", ctx, userEntity).Return(nil)
+		mockRepo.On("Update", ctx, userEntity).Return(nil)
 
 		err := service.UpdateUser(ctx, userEntity)
 		assert.Nil(t, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, userEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, userEntity)
 	})
 
 	t.Run("When FindByID fails in UpdateUser", func(t *testing.T) {
@@ -84,12 +86,12 @@ func TestUserService_UpdateUser(t *testing.T) {
 		expectedError := errors.New("repository error")
 
 		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Save", ctx, userEntity).Return(expectedError)
+		mockRepo.On("Update", ctx, userEntity).Return(expectedError)
 
 		err := service.UpdateUser(ctx, userEntity)
 		assert.Equal(t, expectedError, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, userEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, userEntity)
 	})
 }
 
@@ -153,12 +155,12 @@ func TestUserService_DeleteUser(t *testing.T) {
 		deletedUserEntity.IsDeleted = true
 
 		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Save", ctx, deletedUserEntity).Return(nil)
+		mockRepo.On("Update", ctx, deletedUserEntity).Return(nil)
 
 		err := service.DeleteUser(ctx, "1")
 		assert.Nil(t, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, deletedUserEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, deletedUserEntity)
 	})
 
 	t.Run("When FindByID fails in DeleteUser", func(t *testing.T) {
@@ -184,11 +186,11 @@ func TestUserService_DeleteUser(t *testing.T) {
 		expectedError := errors.New("repository error")
 
 		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Save", ctx, deletedUserEntity).Return(expectedError)
+		mockRepo.On("Update", ctx, deletedUserEntity).Return(expectedError)
 
 		err := service.DeleteUser(ctx, "1")
 		assert.Equal(t, expectedError, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, deletedUserEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, deletedUserEntity)
 	})
 }

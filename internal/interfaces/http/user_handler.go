@@ -37,14 +37,15 @@ func (u *UserHandler) CreateUser(ctx echo.Context) error {
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
-	err = u.service.CreateUser(ctx.Request().Context(), userEntity)
+	createdID, err := u.service.CreateUser(ctx.Request().Context(), userEntity)
 	if err != nil {
-		u.log.ErrorAt(err, userHandlerName, "CreateUser")
 		exception := exceptions.NewInternalServerException(err.Error())
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
-	return ctx.NoContent(http.StatusCreated)
+	return ctx.JSON(http.StatusCreated, struct {
+		ID string `json:"user_id"`
+	}{createdID})
 }
 
 func (u *UserHandler) UpdateUser(ctx echo.Context) error {
@@ -70,7 +71,6 @@ func (u *UserHandler) UpdateUser(ctx echo.Context) error {
 			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		u.log.ErrorAt(err, userHandlerName, "UpdateUser")
 		exception := exceptions.NewInternalServerException(err.Error())
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
@@ -93,7 +93,6 @@ func (u *UserHandler) GetUser(ctx echo.Context) error {
 			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		u.log.ErrorAt(err, userHandlerName, "GetUser")
 		exception := exceptions.NewInternalServerException(err.Error())
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
@@ -116,7 +115,6 @@ func (u *UserHandler) DeleteUser(ctx echo.Context) error {
 			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
-		u.log.ErrorAt(err, userHandlerName, "DeleteUser")
 		exception := exceptions.NewInternalServerException(err.Error())
 		return ctx.JSON(exception.Code(), exception.Error())
 	}

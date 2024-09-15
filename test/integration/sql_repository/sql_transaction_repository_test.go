@@ -26,8 +26,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	log := logger.NewLogger()
 	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
 	defer testDb.TeardownTestDB(t)
-	testDb.CreateUser(t, user.User{
-		ID:        "1",
+	userID := testDb.CreateUser(t, user.User{
 		FirstName: "user",
 		LastName:  "lastname",
 		Email:     "user@email.com",
@@ -38,7 +37,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 		defer testDb.CleanTransactions(t)
 		tx := transaction.Transaction{
 			ID:       "1",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   100.00,
 			DateTime: &now,
 		}
@@ -55,7 +54,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 		defer testDb.CleanTransactions(t)
 		tx := transaction.Transaction{
 			ID:       "1",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   100.00,
 			DateTime: &now,
 		}
@@ -71,7 +70,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	t.Run("When Save returns a zero amount error", func(t *testing.T) {
 		tx := transaction.Transaction{
 			ID:     "1",
-			UserID: "1",
+			UserID: userID,
 		}
 
 		err := repo.Save(ctx, tx)
@@ -82,7 +81,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	t.Run("When Save returns a date_time nil error", func(t *testing.T) {
 		tx := transaction.Transaction{
 			ID:     "1",
-			UserID: "1",
+			UserID: userID,
 			Amount: 100.00,
 		}
 
@@ -94,7 +93,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	t.Run("When Save returns a user not found error", func(t *testing.T) {
 		tx := transaction.Transaction{
 			ID:       "1",
-			UserID:   "2",
+			UserID:   "2000",
 			Amount:   100.00,
 			DateTime: &now,
 		}
@@ -112,8 +111,7 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 	log := logger.NewLogger()
 	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
 	defer testDb.TeardownTestDB(t)
-	testDb.CreateUser(t, user.User{
-		ID:        "1",
+	userID := testDb.CreateUser(t, user.User{
 		FirstName: "user",
 		LastName:  "lastname",
 		Email:     "user@email.com",
@@ -123,8 +121,8 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 	t.Run("When SaveBatch succeeds", func(t *testing.T) {
 		defer testDb.CleanTransactions(t)
 		transactions := []transaction.Transaction{
-			{ID: "1", UserID: "1", Amount: 100.00, DateTime: &now},
-			{ID: "2", UserID: "1", Amount: 200.00, DateTime: &now},
+			{ID: "1", UserID: userID, Amount: 100.00, DateTime: &now},
+			{ID: "2", UserID: userID, Amount: 200.00, DateTime: &now},
 		}
 
 		err := repo.SaveBatch(ctx, transactions)
@@ -141,8 +139,8 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 
 	t.Run("When SaveBatch returns a duplicate error", func(t *testing.T) {
 		transactions := []transaction.Transaction{
-			{ID: "1", UserID: "1", Amount: 100.00, DateTime: &now},
-			{ID: "1", UserID: "1", Amount: 200.00, DateTime: &now}, // Duplicate ID
+			{ID: "1", UserID: userID, Amount: 100.00, DateTime: &now},
+			{ID: "1", UserID: userID, Amount: 200.00, DateTime: &now}, // Duplicate ID
 		}
 
 		err := repo.SaveBatch(ctx, transactions)
@@ -162,7 +160,7 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 
 	t.Run("When SaveBatch returns a date_time nil error", func(t *testing.T) {
 		transactions := []transaction.Transaction{
-			{ID: "1", UserID: "1", Amount: 100.00}, // Missing DateTime
+			{ID: "1", UserID: userID, Amount: 100.00}, // Missing DateTime
 		}
 
 		err := repo.SaveBatch(ctx, transactions)
@@ -188,8 +186,7 @@ func Test_SqlTransactionRepository_FindByID(t *testing.T) {
 	log := logger.NewLogger()
 	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
 	defer testDb.TeardownTestDB(t)
-	testDb.CreateUser(t, user.User{
-		ID:        "1",
+	userID := testDb.CreateUser(t, user.User{
 		FirstName: "user",
 		LastName:  "lastname",
 		Email:     "user@email.com",
@@ -200,7 +197,7 @@ func Test_SqlTransactionRepository_FindByID(t *testing.T) {
 		defer testDb.CleanTransactions(t)
 		tx := transaction.Transaction{
 			ID:       "1",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   100.00,
 			DateTime: &now,
 		}
@@ -244,7 +241,7 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
 	defer testDb.TeardownTestDB(t)
 
-	testDb.CreateUser(t, user.User{
+	userID := testDb.CreateUser(t, user.User{
 		ID:        "1",
 		FirstName: "Test",
 		LastName:  "User",
@@ -255,31 +252,31 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 
 	t.Run("When FindByUserIDWithOptions succeeds without date range", func(t *testing.T) {
 		defer testDb.CleanTransactions(t)
-		tx1 := transaction.Transaction{
+		transaction1 := transaction.Transaction{
 			ID:       "1",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   100.00,
 			DateTime: &now,
 		}
 
-		tx2 := transaction.Transaction{
+		transaction2 := transaction.Transaction{
 			ID:       "2",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   200.00,
 			DateTime: &now,
 		}
 
-		err := repo.Save(ctx, tx1)
+		err := repo.Save(ctx, transaction1)
 		assert.Nil(t, err)
 
-		err = repo.Save(ctx, tx2)
+		err = repo.Save(ctx, transaction2)
 		assert.Nil(t, err)
 
-		transactions, err := repo.FindByUserIDWithOptions(ctx, "1", customStr.Empty, customStr.Empty)
+		transactions, err := repo.FindByUserIDWithOptions(ctx, userID, customStr.Empty, customStr.Empty)
 		assert.Nil(t, err)
 		assert.Len(t, transactions, 2)
-		assert.Equal(t, tx1.ID, transactions[0].ID)
-		assert.Equal(t, tx2.ID, transactions[1].ID)
+		assert.Equal(t, transaction1.ID, transactions[0].ID)
+		assert.Equal(t, transaction2.ID, transactions[1].ID)
 	})
 
 	t.Run("When FindByUserIDWithOptions succeeds with date range", func(t *testing.T) {
@@ -287,7 +284,7 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 		pastTime := now.AddDate(0, 0, -1)
 		transaction1 := transaction.Transaction{
 			ID:       "2",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   100.00,
 			DateTime: &pastTime,
 		}
@@ -295,7 +292,7 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 		pastTime = pastTime.AddDate(0, -6, 0)
 		transaction2 := transaction.Transaction{
 			ID:       "1",
-			UserID:   "1",
+			UserID:   userID,
 			Amount:   200.00,
 			DateTime: &pastTime,
 		}
@@ -308,13 +305,13 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 		err = repo.Save(ctx, transaction2)
 		assert.Nil(t, err)
 
-		transactions, err := repo.FindByUserIDWithOptions(ctx, "1", fromDate, now.Format(time.RFC3339))
+		transactions, err := repo.FindByUserIDWithOptions(ctx, userID, fromDate, now.Format(time.RFC3339))
 		assert.Nil(t, err)
 		assert.Len(t, transactions, 2)
 	})
 
 	t.Run("When FindByUserIDWithOptions returns no results", func(t *testing.T) {
-		transactions, err := repo.FindByUserIDWithOptions(ctx, "3", customStr.Empty, customStr.Empty)
+		transactions, err := repo.FindByUserIDWithOptions(ctx, "1231412", customStr.Empty, customStr.Empty)
 		assert.Nil(t, err)
 		assert.Len(t, transactions, 0)
 	})

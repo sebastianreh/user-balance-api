@@ -14,7 +14,12 @@ func NewUserRepositoryMock() *UserRepositoryMock {
 	return new(UserRepositoryMock)
 }
 
-func (m *UserRepositoryMock) Save(ctx context.Context, userEntity user.User) error {
+func (m *UserRepositoryMock) Save(ctx context.Context, userEntity user.User) (string, error) {
+	args := m.Called(ctx, userEntity)
+	return args.Get(0).(string), args.Error(1)
+}
+
+func (m *UserRepositoryMock) Update(ctx context.Context, userEntity user.User) error {
 	args := m.Called(ctx, userEntity)
 	return args.Error(0)
 }

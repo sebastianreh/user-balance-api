@@ -28,12 +28,18 @@ func TestUserHandler_CreateUser(t *testing.T) {
 
 		requestBytes, _ := json.Marshal(userRequest)
 		context, rec := httpserver.SetupAsRecorder(http.MethodPost, "/users/create", "", string(requestBytes))
-		serviceMock.On("CreateUser", mock.Anything, userRequest).Return(nil)
+		serviceMock.On("CreateUser", mock.Anything, userRequest).Return("1", nil)
 
 		handler := localHttp.NewUserHandler(log, serviceMock)
 		err := handler.CreateUser(context)
 
+		var response struct {
+			ID string `json:"user_id"`
+		}
+		_ = json.Unmarshal(rec.Body.Bytes(), &response)
+
 		assert.Nil(t, err)
+		assert.Equal(t, "1", response.ID)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	})
 
@@ -62,7 +68,7 @@ func TestUserHandler_CreateUser(t *testing.T) {
 
 		requestBytes, _ := json.Marshal(userRequest)
 		context, rec := httpserver.SetupAsRecorder(http.MethodPost, "/users/create", "", string(requestBytes))
-		serviceMock.On("CreateUser", mock.Anything, userRequest).Return(errors.New("service failure"))
+		serviceMock.On("CreateUser", mock.Anything, userRequest).Return("", errors.New("service failure"))
 
 		handler := localHttp.NewUserHandler(log, serviceMock)
 		err := handler.CreateUser(context)
@@ -192,7 +198,6 @@ func TestUserHandler_UpdateUser(t *testing.T) {
 	t.Run("it returns bad request when request validation fails", func(t *testing.T) {
 		serviceMock := mocks.NewUserServiceMock()
 
-		// Invalid request body (empty JSON)
 		context, rec := httpserver.SetupAsRecorder(http.MethodPut, "/:id", "1", "{}")
 		handler := localHttp.NewUserHandler(log, serviceMock)
 

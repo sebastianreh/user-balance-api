@@ -11,7 +11,7 @@ const (
 )
 
 type Repository interface {
-	//Add handler
-	Save(ctx context.Context, user User) error
+	Save(ctx context.Context, user User) (string, error)
+	Update(ctx context.Context, user User) error
 	FindByID(ctx context.Context, userID string) (User, error)
 }

@@ -75,12 +75,14 @@ func (r *TestSQLRepository) cleanDatabase(t *testing.T, query string) {
 	}
 }
 
-func (r *TestSQLRepository) CreateUser(t *testing.T, input user.User) {
+func (r *TestSQLRepository) CreateUser(t *testing.T, input user.User) string {
 	repo := postgre_sql.NewSqlUserRepository(r.log, r.Db)
-	err := repo.Save(context.TODO(), input)
+	userID, err := repo.Save(context.TODO(), input)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
+
+	return userID
 }
 
 func (r *TestSQLRepository) TeardownTestDB(t *testing.T) {

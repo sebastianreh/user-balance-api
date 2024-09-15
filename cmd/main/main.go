@@ -9,8 +9,7 @@ import (
 func main() {
 	dependencies := container.Build()
 	server := httpserver.NewServer(dependencies)
-	middlewares.AddMiddlewares(server.Server, middlewares.WithLogger(dependencies.Config),
-		middlewares.WithRecover(), middlewares.WithRecover())
+	middlewares.AddMiddlewares(server.Server, middlewares.WithRecover())
 	server.Routes()
 	server.SetErrorHandler(middlewares.HTTPErrorHandler)
 	server.Start()

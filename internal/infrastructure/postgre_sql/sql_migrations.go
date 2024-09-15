@@ -60,18 +60,18 @@ func (s *sqlMigrations) RunMigrations() error {
 const (
 	createUsersTable = `
 	CREATE TABLE IF NOT EXISTS users (
-		id VARCHAR(255) PRIMARY KEY,
-		first_name VARCHAR(255),
-		last_name VARCHAR(255),
-		email VARCHAR(255)
+	id BIGSERIAL PRIMARY KEY,
+	first_name VARCHAR(255),
+	last_name VARCHAR(255),
+	email VARCHAR(255)
 	);`
 
 	createTransactionsTable = `
 	CREATE TABLE IF NOT EXISTS transactions (
-		id VARCHAR(255) PRIMARY KEY,
-		user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
-		amount DECIMAL(10, 2) NOT NULL,
-		date_time TIMESTAMPTZ NOT NULL
+	id VARCHAR(255) PRIMARY KEY,
+	user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+	amount DECIMAL(10, 2) NOT NULL,
+	date_time TIMESTAMPTZ NOT NULL
 	);`
 
 	createUserIDIndex = `

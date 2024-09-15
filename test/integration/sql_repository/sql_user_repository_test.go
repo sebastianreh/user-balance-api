@@ -26,9 +26,10 @@ func Test_SqlUSerRepository_Save(t *testing.T) {
 			Email:     "user@email.com",
 		}
 
-		err := repo.Save(ctx, userEntity)
+		id, err := repo.Save(ctx, userEntity)
 
 		assert.Nil(t, err)
+		assert.NotEmpty(t, id)
 	})
 
 	t.Run("When Save returns an error", func(t *testing.T) {
@@ -44,9 +45,54 @@ func Test_SqlUSerRepository_Save(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		err = repo.Save(ctx, userEntity)
+		id, err := repo.Save(ctx, userEntity)
 
 		assert.Error(t, err)
+		assert.Empty(t, id)
+		assert.Equal(t, "sql: database is closed", err.Error())
+	})
+}
+
+func Test_SqlUSerRepository_Update(t *testing.T) {
+	ctx := context.TODO()
+	testDb := sql_repository.SetupTestDB(t)
+	testDb.RunMigrations(t)
+	log := logger.NewLogger()
+	repo := postgre_sql.NewSqlUserRepository(log, testDb.Db)
+	defer testDb.TeardownTestDB(t)
+
+	t.Run("When Update succeeds", func(t *testing.T) {
+		defer testDb.CleanUsers(t)
+		userEntity := user.User{
+			FirstName: "user",
+			LastName:  "lastname",
+			Email:     "user@email.com",
+		}
+		testDb.CreateUser(t, userEntity)
+
+		userEntity.ID = "1"
+		err := repo.Update(ctx, userEntity)
+
+		assert.Nil(t, err)
+	})
+
+	t.Run("When Update returns an error", func(t *testing.T) {
+		userEntity := user.User{
+			ID:        "1",
+			FirstName: "user",
+			LastName:  "lastname",
+			Email:     "user@email.com",
+		}
+
+		err := testDb.Db.Close()
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		id, err := repo.Save(ctx, userEntity)
+
+		assert.Error(t, err)
+		assert.Empty(t, id)
 		assert.Equal(t, "sql: database is closed", err.Error())
 	})
 }
@@ -68,11 +114,11 @@ func Test_SqlUserRepository_FindByID(t *testing.T) {
 			Email:     "user@email.com",
 		}
 
-		testDb.CreateUser(t, userEntity)
+		userID := testDb.CreateUser(t, userEntity)
 
-		foundUser, err := repo.FindByID(ctx, "1")
+		foundUser, err := repo.FindByID(ctx, userID)
 		assert.Nil(t, err)
-		assert.Equal(t, "1", foundUser.ID)
+		assert.Equal(t, userID, foundUser.ID)
 		assert.Equal(t, "user", foundUser.FirstName)
 		assert.Equal(t, "lastname", foundUser.LastName)
 		assert.Equal(t, "user@email.com", foundUser.Email)

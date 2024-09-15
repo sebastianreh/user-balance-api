@@ -21,14 +21,17 @@ const (
 )
 
 type MigrationHandler struct {
-	log     logger.Logger
-	service services.MigrationService
+	log           logger.Logger
+	service       services.MigrationService
+	reportService services.MigrationReportService
 }
 
-func NewMigrationHandler(logger logger.Logger, service services.MigrationService) *MigrationHandler {
+func NewMigrationHandler(logger logger.Logger, service services.MigrationService,
+	reportService services.MigrationReportService) *MigrationHandler {
 	return &MigrationHandler{
-		log:     logger,
-		service: service,
+		log:           logger,
+		service:       service,
+		reportService: reportService,
 	}
 }
 
@@ -40,13 +43,19 @@ func (h *MigrationHandler) UploadMigrationCSV(ctx echo.Context) error {
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
 
-	err = h.service.ProcessBalance(ctx.Request().Context(), file)
+	migrationReport, err := h.service.ProcessBalance(ctx.Request().Context(), file)
 	if err != nil {
 		if err.Error() == services.ReadFileError || strings.Contains(err.Error(), transaction.DuplicateTransactionError) {
 			exception := exceptions.NewBadRequestException(err.Error())
 			return ctx.JSON(exception.Code(), exception.Error())
 		}
 
+		exception := exceptions.NewInternalServerException(err.Error())
+		return ctx.JSON(exception.Code(), exception.Error())
+	}
+
+	err = h.reportService.GenerateAndSendReport(migrationReport, []string{})
+	if err != nil {
 		exception := exceptions.NewInternalServerException(err.Error())
 		return ctx.JSON(exception.Code(), exception.Error())
 	}
