@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/sebastianreh/user-balance-api/internal/domain/report"
 	"github.com/sebastianreh/user-balance-api/pkg/email"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
-	"strings"
 )
 
 const (
@@ -33,7 +34,7 @@ func (s *migrationReportService) GenerateAndSendReport(summary report.MigrationS
 	body := s.generateReportBody(summary)
 	err := s.emailService.SendEmail(to, subject, body)
 	if err != nil {
-		err := fmt.Errorf("could not send report email, error: %w", err)
+		err = fmt.Errorf("could not send report email, error: %w", err)
 		s.log.ErrorAt(err, MigrationReportServiceName, "GenerateAndSendReport")
 		return err
 	}

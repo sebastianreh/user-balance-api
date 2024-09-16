@@ -3,6 +3,9 @@ package http_test
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"testing"
+
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver"
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/internal/domain/balance"
@@ -11,8 +14,6 @@ import (
 	"github.com/sebastianreh/user-balance-api/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http"
-	"testing"
 )
 
 func TestBalanceHandler_GetUserBalanceWithoutOptions(t *testing.T) {
@@ -23,7 +24,7 @@ func TestBalanceHandler_GetUserBalanceWithoutOptions(t *testing.T) {
 		userID := "1"
 		expectedBalance := balance.UserBalance{Balance: 100.00}
 
-		context, rec := httpserver.SetupAsRecorderWithIdField(http.MethodGet,
+		context, rec := httpserver.SetupAsRecorderWithIDField(http.MethodGet,
 			"/balances", userID, "", "user_id")
 		serviceMock.On("GetBalanceByUserID", mock.Anything, userID).Return(expectedBalance, nil)
 
@@ -41,7 +42,7 @@ func TestBalanceHandler_GetUserBalanceWithoutOptions(t *testing.T) {
 	t.Run("it returns bad request for missing user ID", func(t *testing.T) {
 		serviceMock := mocks.NewBalanceServiceMock()
 
-		context, rec := httpserver.SetupAsRecorderWithIdField(http.MethodGet, "/balances", "", "", "user_id")
+		context, rec := httpserver.SetupAsRecorderWithIDField(http.MethodGet, "/balances", "", "", "user_id")
 		handler := localHttp.NewBalanceHandler(log, serviceMock)
 
 		err := handler.GetUserBalanceWithOptions(context)
@@ -54,7 +55,7 @@ func TestBalanceHandler_GetUserBalanceWithoutOptions(t *testing.T) {
 		serviceMock := mocks.NewBalanceServiceMock()
 		userID := "1"
 
-		context, rec := httpserver.SetupAsRecorderWithIdField(http.MethodGet, "/balances", userID, "", "user_id")
+		context, rec := httpserver.SetupAsRecorderWithIDField(http.MethodGet, "/balances", userID, "", "user_id")
 		serviceMock.On("GetBalanceByUserID", mock.Anything, userID).Return(balance.UserBalance{}, errors.New(services.UserNotFound))
 
 		handler := localHttp.NewBalanceHandler(log, serviceMock)
@@ -68,7 +69,7 @@ func TestBalanceHandler_GetUserBalanceWithoutOptions(t *testing.T) {
 		serviceMock := mocks.NewBalanceServiceMock()
 		userID := "1"
 
-		context, rec := httpserver.SetupAsRecorderWithIdField(http.MethodGet, "/balances", userID, "", "user_id")
+		context, rec := httpserver.SetupAsRecorderWithIDField(http.MethodGet, "/balances", userID, "", "user_id")
 		serviceMock.On("GetBalanceByUserID", mock.Anything, userID).Return(balance.UserBalance{}, errors.New("service error"))
 
 		handler := localHttp.NewBalanceHandler(log, serviceMock)

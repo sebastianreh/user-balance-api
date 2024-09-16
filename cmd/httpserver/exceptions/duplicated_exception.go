@@ -1,26 +1,24 @@
 package exceptions
 
-type DuplicatedException interface {
-	Error() string
-	IsDuplicatedError() bool
-}
+import "net/http"
 
-type duplicatedException struct {
-	ErrMessage string `json:"error"`
+type DuplicatedException struct {
+	HTTPCode   int    `json:"code" default:"409"`
+	ErrMessage string `json:"error" default:"error message"`
 }
 
 type Causes struct {
 	Code string `json:"code"`
 }
 
-func (exception *duplicatedException) Error() string {
+func (exception DuplicatedException) Error() string {
 	return exception.ErrMessage
 }
 
-func (exception *duplicatedException) IsDuplicatedError() bool {
-	return true
+func (exception DuplicatedException) Code() int {
+	return exception.HTTPCode
 }
 
 func NewDuplicatedException(message string) DuplicatedException {
-	return &duplicatedException{ErrMessage: message}
+	return DuplicatedException{ErrMessage: message, HTTPCode: http.StatusConflict}
 }

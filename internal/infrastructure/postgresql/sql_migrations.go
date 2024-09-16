@@ -1,9 +1,8 @@
-package postgre_sql
+package postgresql
 
 import (
 	"database/sql"
 	"fmt"
-	"github.com/labstack/gommon/log"
 
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 )
@@ -12,7 +11,7 @@ const (
 	RunMigrationsName = "RunMigrations"
 )
 
-type SqlMigrations interface {
+type SQLMigrations interface {
 	RunMigrations() error
 }
 
@@ -21,7 +20,7 @@ type sqlMigrations struct {
 	db  *sql.DB
 }
 
-func NewSqlMigrations(log logger.Logger, db *sql.DB) SqlMigrations {
+func NewSQLMigrations(log logger.Logger, db *sql.DB) SQLMigrations {
 	return &sqlMigrations{
 		log: log,
 		db:  db,
@@ -53,7 +52,7 @@ func (s *sqlMigrations) RunMigrations() error {
 		return err
 	}
 
-	log.Info("Database migrations executed successfully.")
+	s.log.Info("Database migrations executed successfully")
 	return nil
 }
 
@@ -63,7 +62,8 @@ const (
 	id BIGSERIAL PRIMARY KEY,
 	first_name VARCHAR(255),
 	last_name VARCHAR(255),
-	email VARCHAR(255)
+	email VARCHAR(255),
+	is_deleted BOOLEAN DEFAULT FALSE
 	);`
 
 	createTransactionsTable = `
@@ -71,7 +71,8 @@ const (
 	id VARCHAR(255) PRIMARY KEY,
 	user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
 	amount DECIMAL(10, 2) NOT NULL,
-	date_time TIMESTAMPTZ NOT NULL
+	date_time TIMESTAMPTZ NOT NULL,
+	is_deleted BOOLEAN DEFAULT FALSE
 	);`
 
 	createUserIDIndex = `

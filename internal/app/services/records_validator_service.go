@@ -3,9 +3,14 @@ package services
 import (
 	"errors"
 	"fmt"
-	"github.com/sebastianreh/user-balance-api/pkg/strings"
 	"strconv"
 	"time"
+
+	customStr "github.com/sebastianreh/user-balance-api/pkg/strings"
+)
+
+const (
+	minRecordLen = 4
 )
 
 func recordValidator(record []string) error {
@@ -27,7 +32,7 @@ func recordValidator(record []string) error {
 }
 
 func validateRecordLength(record []string) error {
-	if len(record) < 4 {
+	if len(record) < minRecordLen {
 		return errors.New("record fields are below required")
 	}
 	return nil

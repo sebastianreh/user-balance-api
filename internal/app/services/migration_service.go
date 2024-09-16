@@ -4,16 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sebastianreh/user-balance-api/internal/domain/report"
-	"github.com/sebastianreh/user-balance-api/pkg/csv"
-	"github.com/sebastianreh/user-balance-api/pkg/email"
 	"mime/multipart"
 	"strings"
 	"sync"
 
+	"github.com/sebastianreh/user-balance-api/internal/domain/report"
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
 	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
+	"github.com/sebastianreh/user-balance-api/pkg/csv"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 )
 
@@ -32,14 +31,13 @@ type migrationService struct {
 	userRepository        user.Repository
 	transactionRepository transaction.Repository
 	csvProcessor          csv.CsvProcessor
-	emailService          email.EmailService
 }
 
-func NewMigrationService(config config.Config, logger logger.Logger, userRepository user.Repository,
+func NewMigrationService(cfg config.Config, log logger.Logger, userRepository user.Repository,
 	transactionRepository transaction.Repository, csvProcessor csv.CsvProcessor) MigrationService {
 	return &migrationService{
-		config:                config,
-		log:                   logger,
+		config:                cfg,
+		log:                   log,
 		userRepository:        userRepository,
 		transactionRepository: transactionRepository,
 		csvProcessor:          csvProcessor,

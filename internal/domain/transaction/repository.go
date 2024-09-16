@@ -10,10 +10,10 @@ const (
 )
 
 type Repository interface {
-	//Add handler
 	Save(ctx context.Context, transaction Transaction) error
 	SaveBatch(ctx context.Context, transactions []Transaction) error
-	//Add handler
+	Update(ctx context.Context, transaction Transaction) error
 	FindByID(ctx context.Context, transactionID string) (Transaction, error)
 	FindByUserIDWithOptions(ctx context.Context, userID, fromDate, toDate string) ([]Transaction, error)
+	Delete(ctx context.Context, transactionID string) error
 }

@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,6 +22,11 @@ func (m *UserRepositoryMock) Save(ctx context.Context, userEntity user.User) (st
 
 func (m *UserRepositoryMock) Update(ctx context.Context, userEntity user.User) error {
 	args := m.Called(ctx, userEntity)
+	return args.Error(0)
+}
+
+func (m *UserRepositoryMock) Delete(ctx context.Context, userID string) error {
+	args := m.Called(ctx, userID)
 	return args.Error(0)
 }
 

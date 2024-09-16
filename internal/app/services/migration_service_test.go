@@ -3,9 +3,11 @@ package services_test
 import (
 	"context"
 	"errors"
-	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
 	"mime/multipart"
 	"testing"
+
+	"github.com/sebastianreh/user-balance-api/internal/domain/report"
+	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
 
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
@@ -31,9 +33,10 @@ func Test_MigrationService_ProcessBalance(t *testing.T) {
 
 		service := services.NewMigrationService(cfg, loggerMock, userRepo, transactionRepo, csvProcessor)
 
-		err := service.ProcessBalance(ctx, fileHeader)
+		summary, err := service.ProcessBalance(ctx, fileHeader)
 
 		assert.NotNil(t, err)
+		assert.Empty(t, summary)
 		assert.Equal(t, expectedError, err)
 	})
 
@@ -52,9 +55,10 @@ func Test_MigrationService_ProcessBalance(t *testing.T) {
 
 		service := services.NewMigrationService(cfg, loggerMock, userRepo, transactionRepo, csvProcessor)
 
-		err := service.ProcessBalance(ctx, fileHeader)
+		summary, err := service.ProcessBalance(ctx, fileHeader)
 
 		assert.Error(t, err)
+		assert.Empty(t, summary)
 		assert.Equal(t, err, expectedError)
 	})
 
@@ -73,14 +77,19 @@ func Test_MigrationService_ProcessBalance(t *testing.T) {
 
 		service := services.NewMigrationService(cfg, loggerMock, userRepo, transactionRepo, csvProcessor)
 
-		err := service.ProcessBalance(ctx, fileHeader)
+		summary, err := service.ProcessBalance(ctx, fileHeader)
 
 		assert.Error(t, err)
+		assert.Empty(t, summary)
 		assert.Equal(t, err, expectedError)
 	})
 
 	t.Run("When ProcessBalance completes successfully", func(t *testing.T) {
 		records := [][]string{{"1", "test_user", "100.00", "2024-09-13T10:00:00Z"}}
+		expectedSummary := report.MigrationSummary{
+			TotalRecords: 1,
+			UsersUpdated: 1,
+		}
 
 		csvProcessor := mocks.NewCsvProcessorMock()
 		csvProcessor.On("ReadFile", fileHeader, mock.Anything).Return(records, nil)
@@ -93,8 +102,9 @@ func Test_MigrationService_ProcessBalance(t *testing.T) {
 
 		service := services.NewMigrationService(cfg, loggerMock, userRepo, transactionRepo, csvProcessor)
 
-		err := service.ProcessBalance(ctx, fileHeader)
+		summary, err := service.ProcessBalance(ctx, fileHeader)
 
+		assert.Equal(t, expectedSummary, summary)
 		assert.Nil(t, err)
 	})
 }

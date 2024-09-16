@@ -1,11 +1,12 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver"
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver/exceptions"
-	"net/http"
 )
 
 type Middleware func(echo *echo.Echo)

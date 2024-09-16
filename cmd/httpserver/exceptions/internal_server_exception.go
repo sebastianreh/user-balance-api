@@ -2,29 +2,19 @@ package exceptions
 
 import "net/http"
 
-type InternalServerException interface {
-	Error() string
-	isInternalServerException() bool
-	Code() int
+type InternalServerException struct {
+	HTTPCode   int    `json:"code" default:"500"`
+	ErrMessage string `json:"error" default:"error message"`
 }
 
-type internalServerException struct {
-	ErrMessage string `json:"error"`
-	HttpCode   int
-}
-
-func (exception *internalServerException) Error() string {
+func (exception InternalServerException) Error() string {
 	return exception.ErrMessage
 }
 
-func (exception *internalServerException) Code() int {
-	return exception.HttpCode
-}
-
-func (exception *internalServerException) isInternalServerException() bool {
-	return true
+func (exception InternalServerException) Code() int {
+	return exception.HTTPCode
 }
 
 func NewInternalServerException(message string) InternalServerException {
-	return &internalServerException{ErrMessage: message, HttpCode: http.StatusInternalServerError}
+	return InternalServerException{ErrMessage: message, HTTPCode: http.StatusInternalServerError}
 }

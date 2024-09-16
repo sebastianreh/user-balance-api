@@ -2,13 +2,14 @@ package httpserver
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/sebastianreh/user-balance-api/internal/container"
 	"net/http/httptest"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sebastianreh/user-balance-api/internal/container"
 )
 
-func SetupAsRecorderWithIdField(method, target, id, body, IdField string) (echo.Context, *httptest.ResponseRecorder) {
+func SetupAsRecorderWithIDField(method, target, id, body, iDField string) (echo.Context, *httptest.ResponseRecorder) {
 	mockServer := NewServer(container.Dependencies{})
 
 	if strings.Contains(target, "?") {
@@ -25,15 +26,16 @@ func SetupAsRecorderWithIdField(method, target, id, body, IdField string) (echo.
 	context.SetPath(target)
 
 	if id != "" {
-		context.SetPath(fmt.Sprintf("%s/%s", strings.TrimSuffix(target, "/"+id), fmt.Sprintf(":%s", IdField)))
-		context.SetParamNames(IdField)
+		context.SetPath(fmt.Sprintf("%s/%s", strings.TrimSuffix(target, "/"+id), fmt.Sprintf(":%s", iDField)))
+		context.SetParamNames(iDField)
 		context.SetParamValues(id)
 	}
 
 	return context, recorder
 }
 
-func SetupAsRecorderWithDynamicQueryParams(method, baseURL, userID string, queryParams map[string]string, body string) (echo.Context, *httptest.ResponseRecorder) {
+func SetupAsRecorderWithDynamicQueryParams(method, baseURL, userID string, queryParams map[string]string,
+	body string) (echo.Context, *httptest.ResponseRecorder) {
 	mockServer := NewServer(container.Dependencies{})
 
 	queryString := "?"
@@ -62,5 +64,5 @@ func SetupAsRecorderWithDynamicQueryParams(method, baseURL, userID string, query
 }
 
 func SetupAsRecorder(method, target, id, body string) (echo.Context, *httptest.ResponseRecorder) {
-	return SetupAsRecorderWithIdField(method, target, id, body, "id")
+	return SetupAsRecorderWithIDField(method, target, id, body, "id")
 }

@@ -10,13 +10,21 @@ NUM_USERS = 200
 
 input_csv_headers = ['id', 'user_id', 'amount', 'datetime']
 output_csv_headers = ['user_id', 'balance', 'total_debts', 'total_credits']
+count_csv_headers = ['total_transactions']
 USER_CREATION_URL = 'http://127.0.0.1:8000/user-balance-api/users/create'
 
-def ensure_files(input_file, output_file):
+def ensure_files(input_file, output_file, count_file):
+    os.makedirs(os.path.dirname(count_file), exist_ok=True)
+
     if os.path.exists(input_file):
         os.remove(input_file)
     if os.path.exists(output_file):
         os.remove(output_file)
+    if not os.path.exists(count_file):
+        with open(count_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(count_csv_headers)
+            writer.writerow([0])  # Initialize with 0 transactions if file doesn't exist
 
 def create_user():
     fake = faker.Faker()
@@ -49,14 +57,32 @@ def create_users(num_users):
 
     return ids
 
-def generate_input_csv(input_file, user_ids):
-    users = [str(i) for i in range(1, NUM_USERS + 1)]
+def calculate_total_transactions(count_file):
+    total_transactions = 0
+
+    if os.path.exists(count_file):
+        with open(count_file, 'r') as f:
+            reader = csv.reader(f)
+            next(reader)  # Skip header
+            total_transactions = int(next(reader)[0])  # Read the total transaction count
+
+    return total_transactions
+
+def update_transaction_count(count_file, new_transactions):
+    total_transactions = calculate_total_transactions(count_file) + new_transactions
+
+    with open(count_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(count_csv_headers)
+        writer.writerow([total_transactions])
+
+def generate_input_csv(input_file, user_ids, start_transaction_id):
     records = []
 
-    for i in range(1, NUM_RECORDS + 1):
+    for i in range(start_transaction_id, start_transaction_id + NUM_RECORDS):
         user_id = random.choice(user_ids)
         amount = round(random.uniform(-1000, 1000), 2)  # random amount between -1000 and 1000
-        random_date = datetime.datetime(2024, 1, 1) + datetime.timedelta(days=random.randint(0, 548))
+        random_date = datetime.datetime(2023, 1, 1) + datetime.timedelta(days=random.randint(0, 548))
         datetime_str = random_date.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         record = [i, user_id, amount, datetime_str]
@@ -94,17 +120,23 @@ def calculate_output(input_file, output_file):
             writer.writerow([user_id, round(data['balance'], 2), round(data['total_debts'], 2), round(data['total_credits'], 2)])
 
 if __name__ == "__main__":
-    file_path = 'files/'
+    file_path = 'scripts/generate_transactions/files/'
     input_file = f'{file_path}input_data.csv'
     output_file = f'{file_path}expected_output_data.csv'
+    output_count_file = f'{file_path}transactions_count.csv'
+
+    ensure_files(input_file, output_file, output_count_file)
+    total_transactions_before = calculate_total_transactions(output_count_file)
 
     user_ids = create_users(NUM_USERS)
     if len(user_ids) < NUM_USERS:
         print("Some users could not be created. Exiting...")
         exit(1)
-    ensure_files(input_file, output_file)
-    generate_input_csv(input_file, user_ids)
+
+    generate_input_csv(input_file, user_ids, total_transactions_before + 1)
     calculate_output(input_file, output_file)
+    update_transaction_count(output_count_file, NUM_RECORDS)
 
     print(f"Input CSV generated at: {input_file}")
     print(f"Expected output CSV generated at: {output_file}")
+    print(f"Transaction count CSV updated at: {output_count_file}")

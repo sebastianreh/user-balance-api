@@ -1,10 +1,17 @@
 package httpserver
 
+import (
+	_ "github.com/sebastianreh/user-balance-api/docs/swagger"
+	echoSwagger "github.com/swaggo/echo-swagger"
+)
+
 func (s *Server) Routes() {
-	root := s.Server.Group(s.dependencies.Config.Prefix)
 	s.Server.GET("/ping", s.dependencies.PingHandler.Ping)
 
+	root := s.Server.Group(s.dependencies.Config.Prefix)
+	root.GET("/swagger/*", echoSwagger.WrapHandler)
 	root.POST("/migrate", s.dependencies.MigrationHandler.UploadMigrationCSV)
+
 	usersGroup := root.Group("/users")
 	usersGroup.GET("/:user_id/balance", s.dependencies.BalanceHandler.GetUserBalanceWithOptions)
 	usersGroup.POST("/create", s.dependencies.UserHandler.CreateUser)

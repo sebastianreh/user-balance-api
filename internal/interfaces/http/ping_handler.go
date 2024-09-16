@@ -1,10 +1,11 @@
 package http
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
 )
 
 type Response struct {

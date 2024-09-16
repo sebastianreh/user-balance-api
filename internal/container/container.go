@@ -2,10 +2,11 @@ package container
 
 import (
 	"database/sql"
+
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/internal/domain/balance"
 	"github.com/sebastianreh/user-balance-api/internal/infrastructure/config"
-	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgre_sql"
+	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgresql"
 	"github.com/sebastianreh/user-balance-api/internal/interfaces/http"
 	"github.com/sebastianreh/user-balance-api/pkg/csv"
 	"github.com/sebastianreh/user-balance-api/pkg/email"
@@ -24,27 +25,27 @@ type Dependencies struct {
 }
 
 func Build() Dependencies {
-	dependencies := Dependencies{}
+	var dependencies Dependencies
 	dependencies.Config = config.NewConfig()
 	logs := logger.NewLogger()
 	dependencies.Logs = logs
 	dependencies.PingHandler = http.NewPingHandler(dependencies.Config)
 
-	pgDb, err := postgre_sql.NewPostgresDB(dependencies.Config, dependencies.Logs)
+	pgDB, err := postgresql.NewPostgresDB(dependencies.Config, dependencies.Logs)
 	if err != nil {
 		logs.Fatal("Database initialization error, shutting down server")
 	}
 
-	sqlMigrations := postgre_sql.NewSqlMigrations(logs, pgDb)
+	sqlMigrations := postgresql.NewSQLMigrations(logs, pgDB)
 	err = sqlMigrations.RunMigrations()
 	if err != nil {
 		logs.Fatal("Database migration error, shutting down server")
 	}
 
-	dependencies.SQL = pgDb
+	dependencies.SQL = pgDB
 
-	userSQLRepository := postgre_sql.NewSqlUserRepository(dependencies.Logs, dependencies.SQL)
-	transactionSQLRepository := postgre_sql.NewSqlTransactionRepository(dependencies.Logs, dependencies.SQL)
+	userSQLRepository := postgresql.NewSQLUserRepository(dependencies.Logs, dependencies.SQL)
+	transactionSQLRepository := postgresql.NewSQLTransactionRepository(dependencies.Logs, dependencies.SQL)
 
 	balanceCalculator := balance.NewBalanceCalculator()
 

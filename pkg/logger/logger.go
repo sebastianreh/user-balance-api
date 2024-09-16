@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -30,6 +31,9 @@ func NewLogger() Logger {
 }
 
 func (l *logger) Info(msg string, keyValuePairs ...interface{}) {
+	if len(keyValuePairs) == 0 {
+		l.sugaredLogger.Info(msg)
+	}
 	l.sugaredLogger.Infof(msg+" %s ", keyValuePairs...)
 }
 

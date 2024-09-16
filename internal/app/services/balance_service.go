@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
+
 	"github.com/sebastianreh/user-balance-api/internal/domain/balance"
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
-	"github.com/sebastianreh/user-balance-api/pkg/strings"
+	customStr "github.com/sebastianreh/user-balance-api/pkg/strings"
 )
 
 const (
@@ -25,17 +26,18 @@ type balanceService struct {
 	balanceCalculator     balance.Calculator
 }
 
-func NewBalanceService(logger logger.Logger, userRepository user.Repository,
+func NewBalanceService(log logger.Logger, userRepository user.Repository,
 	transactionRepository transaction.Repository, balanceCalculator balance.Calculator) BalanceService {
 	return &balanceService{
-		log:                   logger,
+		log:                   log,
 		userRepository:        userRepository,
 		transactionRepository: transactionRepository,
 		balanceCalculator:     balanceCalculator,
 	}
 }
 
-func (s balanceService) GetBalanceByUserIDWithOptions(ctx context.Context, userID, fromDate, toDate string) (balance.UserBalance, error) {
+func (s balanceService) GetBalanceByUserIDWithOptions(ctx context.Context, userID, fromDate,
+	toDate string) (balance.UserBalance, error) {
 	var userBalance balance.UserBalance
 	_, err := s.userRepository.FindByID(ctx, userID)
 	if err != nil {

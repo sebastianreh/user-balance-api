@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"github.com/stretchr/testify/mock"
 )

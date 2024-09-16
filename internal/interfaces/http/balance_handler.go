@@ -3,13 +3,14 @@ package http
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/labstack/echo/v4"
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver/exceptions"
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
-	"github.com/sebastianreh/user-balance-api/pkg/strings"
-	"net/http"
-	"time"
+	customStr "github.com/sebastianreh/user-balance-api/pkg/strings"
 )
 
 const (
@@ -23,13 +24,26 @@ type BalanceHandler struct {
 	log     logger.Logger
 }
 
-func NewBalanceHandler(logger logger.Logger, service services.BalanceService) *BalanceHandler {
+func NewBalanceHandler(log logger.Logger, service services.BalanceService) *BalanceHandler {
 	return &BalanceHandler{
-		log:     logger,
+		log:     log,
 		service: service,
 	}
 }
 
+// GetUserBalanceWithOptions godoc
+// @Summary Get user balance with optional date filters
+// @Description Get the balance of a user.
+// If "from" and "to" query parameters are provided, the balance is filtered by the specified date range.
+// @Tags balances
+// @Param user_id path string true "User ID"
+// @Param from query string false "Start date in ISO8601 format (YYYY-MM-DDThh:mm:ssZ)"
+// @Param to query string false "End date in ISO8601 format (YYYY-MM-DDThh:mm:ssZ)"
+// @Success 200 {object} balance.UserBalance
+// @Failure 400 {object} exceptions.BadRequestException
+// @Failure 404 {object} exceptions.NotFoundException
+// @Failure 500 {object} exceptions.InternalServerException
+// @Router /users/{user_id}/balance [get]
 func (h *BalanceHandler) GetUserBalanceWithOptions(ctx echo.Context) error {
 	if isWithOptionsRequest(ctx) {
 		return h.HandleGetUserBalanceWithOptions(ctx)
@@ -43,18 +57,18 @@ func (h *BalanceHandler) HandleGetUserBalanceWithOptions(ctx echo.Context) error
 	if err != nil {
 		exception := exceptions.NewBadRequestException(err.Error())
 		h.log.ErrorAt(exception, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	balance, err := h.service.GetBalanceByUserIDWithOptions(ctx.Request().Context(), id, fromDate, toDate)
 	if err != nil {
 		if err.Error() == services.UserNotFound {
 			exception := exceptions.NewBadRequestException(err.Error())
-			return ctx.JSON(exception.Code(), exception.Error())
+			return ctx.JSON(exception.Code(), exception)
 		}
 
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	return ctx.JSON(http.StatusOK, balance)
@@ -65,18 +79,18 @@ func (h *BalanceHandler) HandleGetUserBalanceWithoutOptions(ctx echo.Context) er
 	if err != nil {
 		exception := exceptions.NewBadRequestException(err.Error())
 		h.log.ErrorAt(exception, balanceHandlerName, "HandleGetUserBalanceWithoutOptions")
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	balance, err := h.service.GetBalanceByUserID(ctx.Request().Context(), id)
 	if err != nil {
 		if err.Error() == services.UserNotFound {
 			exception := exceptions.NewNotFoundException(err.Error())
-			return ctx.JSON(exception.Code(), exception.Error())
+			return ctx.JSON(exception.Code(), exception)
 		}
 
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	return ctx.JSON(http.StatusOK, balance)

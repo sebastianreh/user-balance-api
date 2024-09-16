@@ -3,12 +3,13 @@ package services_test
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
 	"github.com/sebastianreh/user-balance-api/test/mocks"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestUserService_CreateUser(t *testing.T) {
@@ -150,47 +151,23 @@ func TestUserService_DeleteUser(t *testing.T) {
 		mockRepo := mocks.NewUserRepositoryMock()
 		service := services.NewUserService(log, mockRepo)
 
-		userEntity := user.User{ID: "1", FirstName: "user", LastName: "lastname", Email: "user@email.com"}
-		deletedUserEntity := userEntity
-		deletedUserEntity.IsDeleted = true
-
-		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Update", ctx, deletedUserEntity).Return(nil)
+		mockRepo.On("Delete", ctx, "1").Return(nil)
 
 		err := service.DeleteUser(ctx, "1")
 		assert.Nil(t, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Update", ctx, deletedUserEntity)
+		mockRepo.AssertCalled(t, "Delete", ctx, "1")
 	})
 
-	t.Run("When FindByID fails in DeleteUser", func(t *testing.T) {
+	t.Run("When repository Delete fails", func(t *testing.T) {
 		mockRepo := mocks.NewUserRepositoryMock()
 		service := services.NewUserService(log, mockRepo)
 
 		expectedError := errors.New("user not found")
 
-		mockRepo.On("FindByID", ctx, "1").Return(user.User{}, expectedError)
+		mockRepo.On("Delete", ctx, "1").Return(expectedError)
 
 		err := service.DeleteUser(ctx, "1")
 		assert.Equal(t, expectedError, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-	})
-
-	t.Run("When Save fails in DeleteUser", func(t *testing.T) {
-		mockRepo := mocks.NewUserRepositoryMock()
-		service := services.NewUserService(log, mockRepo)
-
-		userEntity := user.User{ID: "1", FirstName: "user", LastName: "lastname", Email: "user@email.com"}
-		deletedUserEntity := userEntity
-		deletedUserEntity.IsDeleted = true
-		expectedError := errors.New("repository error")
-
-		mockRepo.On("FindByID", ctx, "1").Return(userEntity, nil)
-		mockRepo.On("Update", ctx, deletedUserEntity).Return(expectedError)
-
-		err := service.DeleteUser(ctx, "1")
-		assert.Equal(t, expectedError, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Update", ctx, deletedUserEntity)
+		mockRepo.AssertCalled(t, "Delete", ctx, "1")
 	})
 }

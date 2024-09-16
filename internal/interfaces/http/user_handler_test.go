@@ -3,6 +3,9 @@ package http_test
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"testing"
+
 	"github.com/sebastianreh/user-balance-api/cmd/httpserver"
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
 	localHttp "github.com/sebastianreh/user-balance-api/internal/interfaces/http"
@@ -10,8 +13,6 @@ import (
 	"github.com/sebastianreh/user-balance-api/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http"
-	"testing"
 )
 
 func TestUserHandler_CreateUser(t *testing.T) {

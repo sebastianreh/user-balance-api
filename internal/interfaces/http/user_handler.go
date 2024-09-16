@@ -22,45 +22,71 @@ type UserHandler struct {
 	log     logger.Logger
 }
 
-func NewUserHandler(logger logger.Logger, service services.UserService) *UserHandler {
+func NewUserHandler(log logger.Logger, service services.UserService) *UserHandler {
 	return &UserHandler{
-		log:     logger,
+		log:     log,
 		service: service,
 	}
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Description Creates a new user by providing first name, last name, and email
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body user.User true "User Request Body"
+// @Success 201 {object} user.CreationResponse "User created successfully with the user_id"
+// @Failure 400 {object} exceptions.BadRequestException "Invalid input"
+// @Failure 500 {object} exceptions.InternalServerException "Internal server error"
+// @Router /users/create [post]
 func (u *UserHandler) CreateUser(ctx echo.Context) error {
 	userEntity, err := validateUserRequest(ctx)
 	if err != nil {
 		u.log.ErrorAt(err, userHandlerName, "CreateUser")
 		exception := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	createdID, err := u.service.CreateUser(ctx.Request().Context(), userEntity)
 	if err != nil {
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
-	return ctx.JSON(http.StatusCreated, struct {
-		ID string `json:"user_id"`
-	}{createdID})
+	response := user.CreationResponse{
+		UserID: createdID,
+	}
+
+	return ctx.JSON(http.StatusCreated, response)
 }
 
+// UpdateUser godoc
+// @Summary Update an existing user
+// @Description Updates user details such as first name, last name, and email
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param user body user.User true "User Request Body"
+// @Success 200 "User updated successfully"
+// @Failure 400 {object} exceptions.BadRequestException  "Invalid request or missing user ID"
+// @Failure 404 {object} exceptions.NotFoundException "User not found"
+// @Failure 500 {object} exceptions.InternalServerException"Internal server error"
+// @Router /users/{id} [put]
 func (u *UserHandler) UpdateUser(ctx echo.Context) error {
 	id, err := validateUserIDRequest(ctx)
 	if err != nil {
 		u.log.ErrorAt(err, userHandlerName, "UpdateUser")
 		exception := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	userEntity, err := validateUserRequest(ctx)
 	if err != nil {
 		u.log.ErrorAt(err, userHandlerName, "UpdateUser")
 		exception := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	userEntity.ID = id
@@ -68,55 +94,79 @@ func (u *UserHandler) UpdateUser(ctx echo.Context) error {
 	if err != nil {
 		if strings.Contains(err.Error(), user.NotFoundError) {
 			exception := exceptions.NewBadRequestException(err.Error())
-			return ctx.JSON(exception.Code(), exception.Error())
+			return ctx.JSON(exception.Code(), exception)
 		}
 
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	return ctx.NoContent(http.StatusOK)
 }
 
+// GetUser godoc
+// @Summary Get a user by ID
+// @Description Retrieves a user's details by their ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} user.User "User details"
+// @Failure 400 {object} exceptions.BadRequestException "Invalid request or missing user ID"
+// @Failure 404 {object} exceptions.NotFoundException "User not found"
+// @Failure 500 {object} exceptions.InternalServerException "Internal server error"
+// @Router /users/{id} [get]
 func (u *UserHandler) GetUser(ctx echo.Context) error {
 	id, err := validateUserIDRequest(ctx)
 	if err != nil {
 		u.log.ErrorAt(err, userHandlerName, "GetUser")
 		exception := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	userEntity, err := u.service.GetUser(ctx.Request().Context(), id)
 	if err != nil {
 		if strings.Contains(err.Error(), user.NotFoundError) {
 			exception := exceptions.NewNotFoundException(err.Error())
-			return ctx.JSON(exception.Code(), exception.Error())
+			return ctx.JSON(exception.Code(), exception)
 		}
 
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	return ctx.JSON(http.StatusOK, userEntity)
 }
 
+// DeleteUser godoc
+// @Summary Delete a user by ID
+// @Description Soft delete a user by marking them as deleted
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 "No Content"
+// @Failure 400 {object} exceptions.BadRequestException "Invalid request or missing user ID"
+// @Failure 404 {object} exceptions.NotFoundException "User not found"
+// @Failure 500 {object} exceptions.InternalServerException "Internal server error"
+// @Router /users/{id} [delete]
 func (u *UserHandler) DeleteUser(ctx echo.Context) error {
 	id, err := validateUserIDRequest(ctx)
 	if err != nil {
 		u.log.ErrorAt(err, userHandlerName, "DeleteUser")
 		exception := exceptions.NewBadRequestException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	err = u.service.DeleteUser(ctx.Request().Context(), id)
 	if err != nil {
 		if strings.Contains(err.Error(), user.NotFoundError) {
 			exception := exceptions.NewNotFoundException(err.Error())
-			return ctx.JSON(exception.Code(), exception.Error())
+			return ctx.JSON(exception.Code(), exception)
 		}
 
 		exception := exceptions.NewInternalServerException(err.Error())
-		return ctx.JSON(exception.Code(), exception.Error())
+		return ctx.JSON(exception.Code(), exception)
 	}
 
 	return ctx.NoContent(http.StatusOK)

@@ -12,14 +12,16 @@ type (
 		Prefix         string `envconfig:"PREFIX" default:"/user-balance-api"`
 		Env            string `envconfig:"ENV" default:"prod"`
 		Postgres       struct {
-			Host     string `envconfig:"POSTGRES_HOST" default:"127.0.0.1"`
-			Port     string `envconfig:"POSTGRES_PORT" default:"5432"`
-			User     string `envconfig:"POSTGRES_USER" default:"postgres"`
-			Password string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
-			DbName   string `envconfig:"POSTGRES_DATABASE" default:"user-balance"`
+			Host          string `envconfig:"POSTGRES_HOST" default:"127.0.0.1"`
+			Port          string `envconfig:"POSTGRES_PORT" default:"5432"`
+			User          string `envconfig:"POSTGRES_USER" default:"postgres"`
+			Password      string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
+			DBName        string `envconfig:"POSTGRES_DATABASE" default:"user-balance"`
+			ReconnectIdle int    `envconfig:"POSTGRES_RECONNECT_IDLE" default:"3"`
 		}
 		SMTP struct {
 			Username string `envconfig:"SMTP_USER" default:"apikey"`
+			// Check the author sent email for this value
 			Password string `envconfig:"SMTP_PASSWORD" default:""`
 			From     string `envconfig:"SMTP_EMAIL" default:"sebastianreh@gmail.com"`
 			Host     string `envconfig:"SMTP_HOST" default:"smtp.sendgrid.net"`

@@ -3,8 +3,9 @@ package services_test
 import (
 	"context"
 	"errors"
-	"github.com/sebastianreh/user-balance-api/test/mocks"
 	"testing"
+
+	"github.com/sebastianreh/user-balance-api/test/mocks"
 
 	"github.com/sebastianreh/user-balance-api/internal/app/services"
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
@@ -55,12 +56,12 @@ func TestTransactionService_UpdateTransaction(t *testing.T) {
 		transactionEntity := transaction.Transaction{ID: "1", UserID: "1", Amount: 100}
 
 		mockRepo.On("FindByID", ctx, "1").Return(transactionEntity, nil)
-		mockRepo.On("Save", ctx, transactionEntity).Return(nil)
+		mockRepo.On("Update", ctx, transactionEntity).Return(nil)
 
 		err := service.UpdateTransaction(ctx, transactionEntity)
 		assert.Nil(t, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, transactionEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, transactionEntity)
 	})
 
 	t.Run("When FindByID fails in UpdateTransaction", func(t *testing.T) {
@@ -77,7 +78,7 @@ func TestTransactionService_UpdateTransaction(t *testing.T) {
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
 	})
 
-	t.Run("When Save fails in UpdateTransaction", func(t *testing.T) {
+	t.Run("When Update fails in UpdateTransaction", func(t *testing.T) {
 		mockRepo := mocks.NewTransactionRepositoryMock()
 		service := services.NewTransactionService(log, mockRepo)
 
@@ -85,12 +86,12 @@ func TestTransactionService_UpdateTransaction(t *testing.T) {
 		expectedError := errors.New("repository error")
 
 		mockRepo.On("FindByID", ctx, "1").Return(transactionEntity, nil)
-		mockRepo.On("Save", ctx, transactionEntity).Return(expectedError)
+		mockRepo.On("Update", ctx, transactionEntity).Return(expectedError)
 
 		err := service.UpdateTransaction(ctx, transactionEntity)
 		assert.Equal(t, expectedError, err)
 		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, transactionEntity)
+		mockRepo.AssertCalled(t, "Update", ctx, transactionEntity)
 	})
 }
 
@@ -149,17 +150,11 @@ func TestTransactionService_DeleteTransaction(t *testing.T) {
 		mockRepo := mocks.NewTransactionRepositoryMock()
 		service := services.NewTransactionService(log, mockRepo)
 
-		transactionEntity := transaction.Transaction{ID: "1", UserID: "1", Amount: 100}
-		deletedTransactionEntity := transactionEntity
-		deletedTransactionEntity.IsDeleted = true
-
-		mockRepo.On("FindByID", ctx, "1").Return(transactionEntity, nil)
-		mockRepo.On("Save", ctx, deletedTransactionEntity).Return(nil)
+		mockRepo.On("Delete", ctx, "1").Return(nil)
 
 		err := service.DeleteTransaction(ctx, "1")
 		assert.Nil(t, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, deletedTransactionEntity)
+		mockRepo.AssertCalled(t, "Delete", ctx, "1")
 	})
 
 	t.Run("When FindByID fails in DeleteTransaction", func(t *testing.T) {
@@ -168,28 +163,10 @@ func TestTransactionService_DeleteTransaction(t *testing.T) {
 
 		expectedError := errors.New("transaction not found")
 
-		mockRepo.On("FindByID", ctx, "1").Return(transaction.Transaction{}, expectedError)
+		mockRepo.On("Delete", ctx, "1").Return(expectedError)
 
 		err := service.DeleteTransaction(ctx, "1")
 		assert.Equal(t, expectedError, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-	})
-
-	t.Run("When Save fails in DeleteTransaction", func(t *testing.T) {
-		mockRepo := mocks.NewTransactionRepositoryMock()
-		service := services.NewTransactionService(log, mockRepo)
-
-		transactionEntity := transaction.Transaction{ID: "1", UserID: "1", Amount: 100}
-		deletedTransactionEntity := transactionEntity
-		deletedTransactionEntity.IsDeleted = true
-		expectedError := errors.New("repository error")
-
-		mockRepo.On("FindByID", ctx, "1").Return(transactionEntity, nil)
-		mockRepo.On("Save", ctx, deletedTransactionEntity).Return(expectedError)
-
-		err := service.DeleteTransaction(ctx, "1")
-		assert.Equal(t, expectedError, err)
-		mockRepo.AssertCalled(t, "FindByID", ctx, "1")
-		mockRepo.AssertCalled(t, "Save", ctx, deletedTransactionEntity)
+		mockRepo.AssertCalled(t, "Delete", ctx, "1")
 	})
 }

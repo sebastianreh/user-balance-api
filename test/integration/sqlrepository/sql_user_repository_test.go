@@ -1,22 +1,22 @@
-package sql_repository_test
+package sqlrepository_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/sebastianreh/user-balance-api/internal/domain/user"
-	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgre_sql"
+	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgresql"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
-	"github.com/sebastianreh/user-balance-api/test/integration/sql_repository"
+	"github.com/sebastianreh/user-balance-api/test/integration/sqlrepository"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_SqlUSerRepository_Save(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
+	testDb := sqlrepository.SetupTestDB(t)
 	testDb.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlUserRepository(log, testDb.Db)
+	repo := postgresql.NewSQLUserRepository(log, testDb.DB)
 	defer testDb.TeardownTestDB(t)
 
 	t.Run("When Save succeeds", func(t *testing.T) {
@@ -40,7 +40,7 @@ func Test_SqlUSerRepository_Save(t *testing.T) {
 			Email:     "user@email.com",
 		}
 
-		err := testDb.Db.Close()
+		err := testDb.DB.Close()
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -55,22 +55,22 @@ func Test_SqlUSerRepository_Save(t *testing.T) {
 
 func Test_SqlUSerRepository_Update(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
-	testDb.RunMigrations(t)
+	testDB := sqlrepository.SetupTestDB(t)
+	testDB.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlUserRepository(log, testDb.Db)
-	defer testDb.TeardownTestDB(t)
+	repo := postgresql.NewSQLUserRepository(log, testDB.DB)
+	defer testDB.TeardownTestDB(t)
 
 	t.Run("When Update succeeds", func(t *testing.T) {
-		defer testDb.CleanUsers(t)
+		defer testDB.CleanUsers(t)
 		userEntity := user.User{
 			FirstName: "user",
 			LastName:  "lastname",
 			Email:     "user@email.com",
 		}
-		testDb.CreateUser(t, userEntity)
+		userID := testDB.CreateUser(t, userEntity)
 
-		userEntity.ID = "1"
+		userEntity.ID = userID
 		err := repo.Update(ctx, userEntity)
 
 		assert.Nil(t, err)
@@ -84,7 +84,7 @@ func Test_SqlUSerRepository_Update(t *testing.T) {
 			Email:     "user@email.com",
 		}
 
-		err := testDb.Db.Close()
+		err := testDB.DB.Close()
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -99,10 +99,10 @@ func Test_SqlUSerRepository_Update(t *testing.T) {
 
 func Test_SqlUserRepository_FindByID(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
+	testDb := sqlrepository.SetupTestDB(t)
 	testDb.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlUserRepository(log, testDb.Db)
+	repo := postgresql.NewSQLUserRepository(log, testDb.DB)
 	defer testDb.TeardownTestDB(t)
 
 	t.Run("When FindByUserID succeeds", func(t *testing.T) {
@@ -125,7 +125,7 @@ func Test_SqlUserRepository_FindByID(t *testing.T) {
 	})
 
 	t.Run("When FindByUserIDWithOptions fails due to DB closure", func(t *testing.T) {
-		err := testDb.Db.Close()
+		err := testDb.DB.Close()
 		if err != nil {
 			t.Fatalf(err.Error())
 		}

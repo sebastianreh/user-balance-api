@@ -1,10 +1,11 @@
 package transaction_test
 
 import (
-	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
 
 	"github.com/stretchr/testify/assert"
 )

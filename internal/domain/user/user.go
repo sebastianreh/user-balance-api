@@ -8,6 +8,10 @@ type User struct {
 	IsDeleted bool   `json:"-"`
 }
 
+type CreationResponse struct {
+	UserID string `json:"user_id"`
+}
+
 func CreateUserByRecord(record []string) User {
 	return User{
 		ID: record[1],

@@ -1,32 +1,33 @@
-package sql_repository_test
+package sqlrepository_test
 
 import (
 	"context"
-	"github.com/sebastianreh/user-balance-api/internal/domain/user"
-	"github.com/sebastianreh/user-balance-api/pkg/strings"
 	"testing"
 	"time"
 
+	"github.com/sebastianreh/user-balance-api/internal/domain/user"
+	customStr "github.com/sebastianreh/user-balance-api/pkg/strings"
+
 	"github.com/sebastianreh/user-balance-api/internal/domain/transaction"
-	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgre_sql"
+	"github.com/sebastianreh/user-balance-api/internal/infrastructure/postgresql"
 	"github.com/sebastianreh/user-balance-api/pkg/logger"
-	"github.com/sebastianreh/user-balance-api/test/integration/sql_repository"
+	"github.com/sebastianreh/user-balance-api/test/integration/sqlrepository"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	notFoundError = "pq: insert or update on table \"transactions\" violates foreign key constraint \"transactions_user_id_fkey\""
+	notFoundError = user.NotFoundError
 	nilDateError  = "pq: null value in column \"date_time\" of relation \"transactions\" violates not-null constraint"
 )
 
 func Test_SqlTransactionRepository_Save(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
-	testDb.RunMigrations(t)
+	testDB := sqlrepository.SetupTestDB(t)
+	testDB.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
-	defer testDb.TeardownTestDB(t)
-	userID := testDb.CreateUser(t, user.User{
+	repo := postgresql.NewSQLTransactionRepository(log, testDB.DB)
+	defer testDB.TeardownTestDB(t)
+	userID := testDB.CreateUser(t, user.User{
 		FirstName: "user",
 		LastName:  "lastname",
 		Email:     "user@email.com",
@@ -34,7 +35,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	now := time.Now()
 
 	t.Run("When Save succeeds", func(t *testing.T) {
-		defer testDb.CleanTransactions(t)
+		defer testDB.CleanTransactions(t)
 		tx := transaction.Transaction{
 			ID:       "1",
 			UserID:   userID,
@@ -51,7 +52,7 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 	})
 
 	t.Run("When Save returns a duplicate error", func(t *testing.T) {
-		defer testDb.CleanTransactions(t)
+		defer testDB.CleanTransactions(t)
 		tx := transaction.Transaction{
 			ID:       "1",
 			UserID:   userID,
@@ -106,10 +107,10 @@ func Test_SqlTransactionRepository_Save(t *testing.T) {
 
 func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
+	testDb := sqlrepository.SetupTestDB(t)
 	testDb.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
+	repo := postgresql.NewSQLTransactionRepository(log, testDb.DB)
 	defer testDb.TeardownTestDB(t)
 	userID := testDb.CreateUser(t, user.User{
 		FirstName: "user",
@@ -170,7 +171,7 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 
 	t.Run("When SaveBatch returns a user not found error", func(t *testing.T) {
 		transactions := []transaction.Transaction{
-			{ID: "1", UserID: "2", Amount: 100.00, DateTime: &now}, // UserID not found
+			{ID: "1", UserID: "3426985345123341", Amount: 100.00, DateTime: &now}, // UserID not found
 		}
 
 		err := repo.SaveBatch(ctx, transactions)
@@ -181,10 +182,10 @@ func Test_SqlTransactionRepository_SaveBatch(t *testing.T) {
 
 func Test_SqlTransactionRepository_FindByID(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
+	testDb := sqlrepository.SetupTestDB(t)
 	testDb.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
+	repo := postgresql.NewSQLTransactionRepository(log, testDb.DB)
 	defer testDb.TeardownTestDB(t)
 	userID := testDb.CreateUser(t, user.User{
 		FirstName: "user",
@@ -222,7 +223,7 @@ func Test_SqlTransactionRepository_FindByID(t *testing.T) {
 
 	t.Run("When FindByID encounters a database error", func(t *testing.T) {
 		testDb.CleanTransactions(t)
-		err := testDb.Db.Close()
+		err := testDb.DB.Close()
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -235,10 +236,10 @@ func Test_SqlTransactionRepository_FindByID(t *testing.T) {
 
 func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 	ctx := context.TODO()
-	testDb := sql_repository.SetupTestDB(t)
+	testDb := sqlrepository.SetupTestDB(t)
 	testDb.RunMigrations(t)
 	log := logger.NewLogger()
-	repo := postgre_sql.NewSqlTransactionRepository(log, testDb.Db)
+	repo := postgresql.NewSQLTransactionRepository(log, testDb.DB)
 	defer testDb.TeardownTestDB(t)
 
 	userID := testDb.CreateUser(t, user.User{
@@ -317,7 +318,7 @@ func Test_SqlTransactionRepository_FindByUserIDWithOptions(t *testing.T) {
 	})
 
 	t.Run("When FindByUserIDWithOptions encounters a database error", func(t *testing.T) {
-		err := testDb.Db.Close()
+		err := testDb.DB.Close()
 		assert.Nil(t, err)
 
 		_, err = repo.FindByUserIDWithOptions(ctx, "1", customStr.Empty, customStr.Empty)
